@@ -1,23 +1,23 @@
 from dataclasses import dataclass, field
 from datetime import time
 
-from domain.exceptions.errors import InvalidSpotTitleError, InvalidSpotNumberError, InvalidWorkingTimeError, InvalidDescriptionError
+from domain.exceptions.errors import InvalidTitleError, InvalidNumberError, InvalidWorkingTimeError, InvalidDescriptionError
 
 @dataclass(frozen=True)
-class SpotTitle:
+class Title:
     value: str
 
     def __post_init__(self):
         if not self.value.strip():
-            raise InvalidSpotTitleError('Title cannot be empty')
+            raise InvalidTitleError('Title cannot be empty')
 
 @dataclass(frozen=True)
-class SpotNumber:
+class Number:
     value: int
 
     def __post_init__(self):
         if self.value <= 0 or self.value > 100:
-            raise InvalidSpotNumberError(f'Spot number must be between 1 and 100, got {self.value}')
+            raise InvalidNumberError(f'Spot number must be between 1 and 100, got {self.value}')
         
 @dataclass(frozen=True)
 class WorkingTime:

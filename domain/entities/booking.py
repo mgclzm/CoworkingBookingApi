@@ -29,3 +29,4 @@ class Booking:
         if self.status == BookingStatus.COMPLETED or self.status == BookingStatus.CANCELLED:
             raise BookingCancelError('Cannot cancel completed booking')
         self.status = BookingStatus.CANCELLED
+        

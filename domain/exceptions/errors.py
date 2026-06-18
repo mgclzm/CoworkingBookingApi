@@ -4,10 +4,10 @@ class BaseException(Exception):
 class InactiveEntityUsageError(BaseException):
     ...
 
-class InvalidSpotTitleError(BaseException):
+class InvalidTitleError(BaseException):
     ...
 
-class InvalidSpotNumberError(BaseException):
+class InvalidNumberError(BaseException):
     ...
 
 class InvalidWorkingTimeError(BaseException):
@@ -30,3 +30,6 @@ class BookingConfirmError(BaseException):
 
 class BookingCancelError(BaseException):
     ...
+
+class WorkplaceAlreadyExistError(BaseException):
+    ... 
