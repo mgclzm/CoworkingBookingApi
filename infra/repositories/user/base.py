@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from domain.entities.user import AppUser
 from domain.values.user import Name
-from infra.base_repository import BaseRepository 
+from infra.repositories.base_repository import BaseRepository 
 
 class BaseUserRepository(BaseRepository[AppUser]):
     @abstractmethod

@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from domain.entities.workspace import Workplace, Workspace
 from domain.values.booking import BookingTime
-from infra.base_repository import BaseRepository
+from infra.repositories.base_repository import BaseRepository
 
 class BaseWorkspaceRepository(BaseRepository[Workspace]):
     @abstractmethod

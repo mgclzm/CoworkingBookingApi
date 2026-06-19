@@ -8,8 +8,8 @@ class Title:
     value: str
 
     def __post_init__(self):
-        if not self.value.strip():
-            raise InvalidTitleError('Title cannot be empty')
+        if not self.value.strip() or len(self.value) > 50:
+            raise InvalidTitleError('Title cannot be empty or bigger then 50 characters')
 
 @dataclass(frozen=True)
 class Number:

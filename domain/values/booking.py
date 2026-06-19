@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from datetime import time
+from datetime import datetime
 
 from domain.exceptions.errors import InvalidBookingTimeError
 
 @dataclass(frozen=True)
 class BookingTime:
-    start_time: time
-    end_time: time
+    start_time: datetime
+    end_time: datetime
 
     def __post_init__(self):
         if self.start_time >= self.end_time:

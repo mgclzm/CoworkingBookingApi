@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from email_validator import validate_email
+from email_validator import validate_email, EmailNotValidError
 
 from domain.exceptions.errors import InvalidNameError, InvalidPasswordError
 
@@ -20,6 +20,8 @@ class Email:
 
     def __post_init__(self):
         validate_email(self.value)
+        if len(self.value) > 60:
+            raise EmailNotValidError('Email cannot be bigger then 60 characters')
 
 @dataclass(frozen=True)
 class Password:
