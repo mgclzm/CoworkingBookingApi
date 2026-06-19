@@ -14,5 +14,5 @@ class BaseWorkspaceRepository(BaseRepository[Workspace]):
         ...
     
     @abstractmethod
-    async def find_all_available_places(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
+    async def find_all_available_wokrplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
         ...
