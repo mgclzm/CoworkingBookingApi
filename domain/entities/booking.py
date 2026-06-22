@@ -5,11 +5,11 @@ from enum import Enum
 from domain.exceptions.errors import BookingCancelError, BookingConfirmError
 from domain.values.booking import BookingTime
 
-class BookingStatus(Enum):
-    PENDING = 1
-    CONFIRMED = 2
-    CANCELLED = 3
-    COMPLETED = 4
+class BookingStatus(str, Enum):
+    PENDING = 'PENDING'
+    CONFIRMED = 'CONFIRMED'
+    CANCELLED = 'CANCELLED'
+    COMPLETED = 'COMPLETED'
 
 @dataclass
 class Booking:

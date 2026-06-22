@@ -1,12 +1,14 @@
 from dataclasses import dataclass
+from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
 from domain.entities.workspace import Workplace, Workspace
 from domain.values.booking import BookingTime
 from domain.values.workspace import Title, WorkingTime, WorkspaceDescription, Number
+from infra.repositories.booking.booking_model import BookingModel
 from infra.repositories.workspace.base import BaseWorkspaceRepository
 from infra.repositories.workspace.workspace_model import WorkplaceModel, WorkspaceModel
 
@@ -70,6 +72,12 @@ class SqlAlchemyWorkspaceRepository(BaseWorkspaceRepository):
         return _convert_workspace_model_to_entity(result)
     
     async def find_all_available_wokrplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
-        #TODO
-        ...
-        
+        overlap = and_(BookingModel.workspace_id == workspace_id, 
+                       BookingModel.start_time < booking_time.end_time, 
+                       BookingModel.end_time > booking_time.start_time)
+        busy_places = select(BookingModel.workplace_id).where(overlap)
+        result = await self._session.execute(select(WorkplaceModel)
+                                             .where(WorkplaceModel.workplace_id == workspace_id)
+                                             .where(WorkplaceModel.workspace_id.not_in(busy_places)))
+        result = result.scalars().all()
+        return [_convert_workplace_model_to_entity(workplace) for workplace in result]
