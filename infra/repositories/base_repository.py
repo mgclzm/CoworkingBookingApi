@@ -12,3 +12,7 @@ class BaseRepository(ABC, Generic[T]):
     @abstractmethod
     async def delete(self, entity: T) -> None:
         ...
+
+    @abstractmethod
+    async def merge(self, entity: T) -> None:
+        ...

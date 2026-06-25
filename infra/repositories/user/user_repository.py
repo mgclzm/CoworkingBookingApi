@@ -38,6 +38,10 @@ class SqlAlchemyUserRepository(BaseUserRepository):
     async def delete(self, entity: AppUser) -> None:
         user_model = _convert_user_entity_to_model(entity)
         await self._session.delete(user_model)
+    
+    async def merge(self, entity: AppUser) -> None:
+        user_model = _convert_user_entity_to_model(entity)
+        await self._session.merge(user_model)
 
     async def find_by_user_id(self, user_id: str) -> AppUser | None:
         result = await self._session.execute(select(AppUserModel).where(AppUserModel.user_id == user_id))

@@ -56,6 +56,10 @@ class SqlAlchemyWorkspaceRepository(BaseWorkspaceRepository):
     async def delete(self, entity: Workspace) -> None:
         workspace_model = _convert_workspace_entity_to_model(entity)
         await self._session.delete(workspace_model)
+
+    async def merge(self, entity: Workspace) -> None:
+        workspace_model = _convert_workspace_entity_to_model(entity)
+        await self._session.merge(workspace_model)
     
     async def find_all(self) -> list[Workspace]:
         workspaces = await self._session.execute(select(WorkspaceModel).options(selectinload(WorkspaceModel.workplaces)))

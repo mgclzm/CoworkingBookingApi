@@ -4,10 +4,10 @@ build/
 dist/
 wheels/
 *.egg-info
-.pytest_cache
+.pytest_cache/
 uv.lock
 .python-version
 
-
-.venv
-.vscode
+.env
+.venv/
+.vscode/

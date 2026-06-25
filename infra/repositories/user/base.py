@@ -10,7 +10,7 @@ class BaseUserRepository(BaseRepository[AppUser]):
         ...
   
     @abstractmethod
-    async def find_by_name(self, name: Name) -> AppUser | None:
+    async def find_all_by_name(self, name: Name) -> list[AppUser]:
         ...
     
     @abstractmethod
