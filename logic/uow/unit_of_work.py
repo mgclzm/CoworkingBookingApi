@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from types import TracebackType
 from typing import Type
 
-from application.uow.base import BaseUnitOfWork
+from logic.uow.base import BaseUnitOfWork
 from infra.repositories.booking.base import BaseBookingRepository
 from infra.repositories.booking.booking_repository import SqlAlchemyBookingRepository
 from infra.repositories.user.base import BaseUserRepository

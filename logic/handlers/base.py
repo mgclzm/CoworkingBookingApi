@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
-from application.commands.base import BaseCommand
-from application.queries.base import BaseQuery, ResultT
+from logic.commands.base import BaseCommand
+from logic.queries.base import BaseQuery, ResultT
 
 class CommandHandler(ABC):
     @abstractmethod

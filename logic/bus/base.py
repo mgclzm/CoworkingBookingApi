@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from application.handlers.base import CommandHandler, QueryHandler
-from application.commands.base import BaseCommand
-from application.queries.base import BaseQuery, ResultT
+from logic.handlers.base import CommandHandler, QueryHandler
+from logic.commands.base import BaseCommand
+from logic.queries.base import BaseQuery, ResultT
 
 class ICommandBus(ABC):
     @abstractmethod
