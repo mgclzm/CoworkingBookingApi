@@ -1,0 +1,21 @@
+version: '5.1'
+
+services:
+  main-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: main-app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    command: "uv run uvicorn --factory api.app.app:init_app --reload --host 0.0.0.0 --port 8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
