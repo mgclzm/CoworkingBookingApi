@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Type
 
 from logic.uow.base import BaseUnitOfWork
 from infra.repositories.booking.base import BaseBookingRepository
@@ -9,15 +8,16 @@ from infra.repositories.user.base import BaseUserRepository
 from infra.repositories.user.user_repository import SqlAlchemyUserRepository
 from infra.repositories.workspace.base import BaseWorkspaceRepository
 from infra.repositories.workspace.workspace_repository import SqlAlchemyWorkspaceRepository
+from infra.settings.settings import settings
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 
-DEFAULT_SESSION_FACTORY = async_sessionmaker(bind=create_async_engine('settings.postgres_url()'), 
+DEFAULT_SESSION_FACTORY = async_sessionmaker(bind=create_async_engine(settings.postgres_db_url), 
                                              autoflush=False, expire_on_commit=False)
 
 @dataclass
 class SqlAlchemyUnitOfWork(BaseUnitOfWork):
-    _session_factory: async_sessionmaker[AsyncSession] = field(default=DEFAULT_SESSION_FACTORY)
+    _session_factory: async_sessionmaker[AsyncSession] = field(default=DEFAULT_SESSION_FACTORY, kw_only=True)
     _session: AsyncSession = field(init=False)
     user_repository: BaseUserRepository = field(init=False)
     workspace_repository: BaseWorkspaceRepository = field(init=False)
@@ -30,7 +30,7 @@ class SqlAlchemyUnitOfWork(BaseUnitOfWork):
         self.booking_repository = SqlAlchemyBookingRepository(self._session)
         return self
     
-    async def __aexit__(self, exc_type: Type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None:
         try:
             if exc_type:
                 await self._session.rollback()
@@ -40,6 +40,6 @@ class SqlAlchemyUnitOfWork(BaseUnitOfWork):
     async def commit(self) -> None:
         await self._session.commit()
     
-    async def _rollback(self):
-        await self._session.rollback()
+    # async def _rollback(self):
+    #     await self._session.rollback()
             

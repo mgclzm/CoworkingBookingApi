@@ -15,6 +15,6 @@ class BaseUnitOfWork(ABC):
     async def commit(self):
         ...
     
-    @abstractmethod
-    async def _rollback(self):
-        ...
+    # @abstractmethod
+    # async def _rollback(self):
+    #     ...

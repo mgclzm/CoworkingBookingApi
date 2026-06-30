@@ -9,7 +9,7 @@ class CommandHandler(ABC):
     async def handle(self, command: BaseCommand) -> None:
         ...
 
-QueryT = TypeVar(name='QueryT', bound=BaseQuery)
+QueryT = TypeVar('QueryT', bound=BaseQuery)
 
 class QueryHandler(ABC, Generic[QueryT, ResultT]):
     @abstractmethod
