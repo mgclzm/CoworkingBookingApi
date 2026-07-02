@@ -17,11 +17,8 @@ DEFAULT_SESSION_FACTORY = async_sessionmaker(bind=create_async_engine(settings.p
 
 @dataclass
 class SqlAlchemyUnitOfWork(BaseUnitOfWork):
-    _session_factory: async_sessionmaker[AsyncSession] = field(default=DEFAULT_SESSION_FACTORY, kw_only=True)
+    _session_factory: async_sessionmaker[AsyncSession] = field(default=DEFAULT_SESSION_FACTORY)
     _session: AsyncSession = field(init=False)
-    user_repository: BaseUserRepository = field(init=False)
-    workspace_repository: BaseWorkspaceRepository = field(init=False)
-    booking_repository: BaseBookingRepository = field(init=False)
     
     async def __aenter__(self) -> SqlAlchemyUnitOfWork:
         self._session = self._session_factory() 

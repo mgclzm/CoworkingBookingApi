@@ -39,3 +39,6 @@ class CommandHandlersNotFoundError(BaseException):
 
 class QueryHandlerNotFoundError(BaseException):
     ...
+
+class EmailAlreadyExistError(BaseException):
+    ...
