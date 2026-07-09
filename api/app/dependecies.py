@@ -58,5 +58,9 @@ def require_access_token(access_token: Annotated[Optional[str], Security(access_
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid access token')
     
+    token_type = cast(TokenType, payload.get('type'))
+    if token_type != TokenType.ACCESS:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token type is not "access"')
+    
     user_id = cast(str, payload.get('sub'))
     return user_id

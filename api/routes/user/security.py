@@ -96,7 +96,7 @@ class RefreshTokenTypeValidator(IRefreshTokenValidator):
     async def validate(self, refresh_token_payload: dict[str, Any]) -> None:
         token_type = cast(TokenType, refresh_token_payload.get('type'))
         if token_type != TokenType.REFRESH:
-            raise WrongTokenTypeError('Token missing type claim or token type is not "refresh"')
+            raise WrongTokenTypeError('Token type is not "refresh"')
 
 @dataclass(frozen=True, slots=True)
 class RefreshTokenJtiValidator(IRefreshTokenValidator):
