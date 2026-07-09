@@ -4,6 +4,7 @@ from types import TracebackType
 from typing import Type
 
 from infra.repositories.booking.base import BaseBookingRepository
+from infra.repositories.refresh_token.base import BaseRefreshTokenRepository
 from infra.repositories.user.base import BaseUserRepository
 from infra.repositories.workspace.base import BaseWorkspaceRepository
 
@@ -12,6 +13,7 @@ class BaseUnitOfWork(ABC):
     user_repository: BaseUserRepository = field(init=False)
     workspace_repository: BaseWorkspaceRepository = field(init=False)
     booking_repository: BaseBookingRepository = field(init=False)
+    refresh_token_repository: BaseRefreshTokenRepository = field(init=False)
     
     @abstractmethod
     async def __aenter__(self):

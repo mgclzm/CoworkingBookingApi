@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,5 +16,13 @@ class Settings(BaseSettings):
     @property
     def postgres_db_url(self) -> str:
         return f'postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}'
+    
+    token_algorithm: str = Field(alias='TOKEN_ALGORITHM', default='')
+
+    refresh_token_secret: str = Field(alias='REFRESH_TOKEN_SECRET', default='')
+    refresh_token_lifetime: int = Field(alias='REFRESH_TOKEN_LIFETIME', default=0)
+
+    acess_token_secret: str = Field(alias='ACCESS_TOKEN_SECRET', default='')
+    access_token_lifetime: int = Field(alias='ACCESS_TOKEN_LIFETIME', default=0)
     
 settings = Settings() 

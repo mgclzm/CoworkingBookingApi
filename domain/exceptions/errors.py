@@ -42,3 +42,9 @@ class QueryHandlerNotFoundError(BaseException):
 
 class EmailAlreadyExistError(BaseException):
     ...
+
+class UserNotFoundError(BaseException):
+    ...
+
+class InvalidUserCredentialsError(BaseException):
+    ...

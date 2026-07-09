@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from types import TracebackType
 
+from infra.repositories.refresh_token.refresh_token_repository import SqlAlchemyRefreshTokenRepository
 from logic.uow.base import BaseUnitOfWork
 from infra.repositories.booking.base import BaseBookingRepository
 from infra.repositories.booking.booking_repository import SqlAlchemyBookingRepository
@@ -25,6 +26,7 @@ class SqlAlchemyUnitOfWork(BaseUnitOfWork):
         self.user_repository = SqlAlchemyUserRepository(self._session)
         self.workspace_repository = SqlAlchemyWorkspaceRepository(self._session)
         self.booking_repository = SqlAlchemyBookingRepository(self._session)
+        self.refresh_token_repository = SqlAlchemyRefreshTokenRepository(self._session)
         return self
     
     async def __aexit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None:

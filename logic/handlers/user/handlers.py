@@ -1,13 +1,20 @@
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
+from api.routes.user.security import TokenType, encode_access_token, encode_refresh_token
+from api.routes.user.shemas import AccessTokenResponseSchema, RefreshTokenResponseSchema
+from domain.entities.refresh_token import RefreshToken
 from domain.entities.user import AppUser
-from domain.exceptions.errors import EmailAlreadyExistError
+from domain.exceptions.errors import EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
 from domain.values.user import Email, Name, Password
 from logic.commands.user_commands import RegisterUserCommand
-from logic.handlers.base import CommandHandler
+from logic.handlers.base import CommandHandler, QueryHandler
+from logic.queries.user.user_queries import AccessTokenQuery, RefreshTokenQuery
 from logic.uow.base import BaseUnitOfWork
+from infra.settings.settings import settings
 
 from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError
 
 @dataclass
 class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand]):
@@ -26,3 +33,38 @@ class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand]):
             
             await self._uow.user_repository.save(new_user)
             await self._uow.commit()
+
+@dataclass
+class RefreshTokenQueryHandler(QueryHandler[RefreshTokenQuery, RefreshTokenResponseSchema]):
+    _uow: BaseUnitOfWork
+
+    async def handle(self, query: RefreshTokenQuery) -> RefreshTokenResponseSchema:
+        async with self._uow:
+            found_user = await self._uow.user_repository.find_by_email(query.email)
+            if not found_user:
+                raise UserNotFoundError(f'User with "{query.email}" email not found')
+            ph = PasswordHasher()
+            try:
+                ph.verify(found_user.password.value, query.password)
+            except VerificationError:
+                raise InvalidUserCredentialsError('Invalid user credentials')
+            
+            sub = found_user.user_id
+            exp = datetime.now(tz=timezone.utc) + timedelta(seconds=settings.refresh_token_lifetime)
+            refresh_token = RefreshToken(sub, exp)
+            encoded_refresh_token = encode_refresh_token(refresh_token)
+            encoded_access_token = encode_access_token(sub) 
+            
+            await self._uow.refresh_token_repository.save(refresh_token)
+            await self._uow.commit()
+            
+            response_schema = RefreshTokenResponseSchema(refresh_token=encoded_refresh_token, access_token=encoded_access_token)
+            return response_schema
+
+@dataclass
+class AccessTokenQueryHandler(QueryHandler[AccessTokenQuery, AccessTokenResponseSchema]):
+    async def handle(self, query: AccessTokenQuery) -> AccessTokenResponseSchema:
+        sub = query.user_id
+        encoded_access_token = encode_access_token(sub)
+        response_schema = AccessTokenResponseSchema(token_type=TokenType.ACCESS, access_token=encoded_access_token)
+        return response_schema

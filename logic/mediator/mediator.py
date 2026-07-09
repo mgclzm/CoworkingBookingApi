@@ -5,7 +5,7 @@ from typing import Iterable
 from domain.exceptions.errors import CommandHandlersNotFoundError, QueryHandlerNotFoundError
 from logic.commands.base import BaseCommand
 from logic.mediator.base import ICommandMediator, IQueryMediator
-from logic.handlers.base import CommandHandler, QueryHandler
+from logic.handlers.base import CommandHandler, QueryHandler, QueryT
 from logic.queries.base import BaseQuery, ResultT
 
 @dataclass
@@ -27,7 +27,7 @@ class CommandMediator(ICommandMediator):
 class QueryMediator(IQueryMediator):
     _query_register: dict[type[BaseQuery], QueryHandler] = field(default_factory=dict, kw_only=True)
 
-    def register_query(self, query_type: type[BaseQuery[ResultT]], handler: QueryHandler[BaseQuery[ResultT], ResultT]) -> None:
+    def register_query(self, query_type: type[QueryT], handler: QueryHandler[QueryT, ResultT]) -> None:
         self._query_register[query_type] = handler
     
     async def execute_query(self, query: BaseQuery[ResultT]) -> ResultT:

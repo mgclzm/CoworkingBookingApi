@@ -4,12 +4,11 @@ import punq
 
 from functools import lru_cache
 
-from logic.commands.base import BaseCommand
 from logic.commands.user_commands import RegisterUserCommand
-from logic.handlers.base import CommandHandler
-from logic.handlers.user.handlers import RegisterUserCommandHandler
-from logic.mediator.base import ICommandMediator
-from logic.mediator.mediator import CommandMediator
+from logic.handlers.user.handlers import AccessTokenQueryHandler, RefreshTokenQueryHandler, RegisterUserCommandHandler
+from logic.mediator.base import ICommandMediator, IQueryMediator
+from logic.mediator.mediator import CommandMediator, QueryMediator
+from logic.queries.user.user_queries import AccessTokenQuery, RefreshTokenQuery
 from logic.uow.base import BaseUnitOfWork
 from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
@@ -17,12 +16,23 @@ COMMAND_AND_HANDLERS_PAIRS = [
     (RegisterUserCommand, [RegisterUserCommandHandler]),
 ]
 
+QUERY_AND_HANDLER_PAIRS = [
+    (RefreshTokenQuery, RefreshTokenQueryHandler),
+    (AccessTokenQuery, AccessTokenQueryHandler)
+]
 def _init_command_mediator(container: punq.Container) -> CommandMediator:
     command_mediator = CommandMediator()
     for command_type, handler_types in COMMAND_AND_HANDLERS_PAIRS:
         handlers = [typed_resolve(container, handler_type) for handler_type in handler_types]
         command_mediator.register_command(command_type, handlers)
     return command_mediator
+
+def _init_query_mediator(container: punq.Container) -> QueryMediator:
+    query_mediator = QueryMediator()
+    for query_type, handler_type in QUERY_AND_HANDLER_PAIRS:
+        handler = typed_resolve(container, handler_type)
+        query_mediator.register_query(query_type, handler)
+    return query_mediator
 
 T = TypeVar('T')
 def typed_resolve(container: punq.Container, service_type: type[T]) -> T:
@@ -39,5 +49,9 @@ def _init_container() -> punq.Container:
     
     container.register(RegisterUserCommandHandler)
 
+    container.register(RefreshTokenQueryHandler)
+    container.register(AccessTokenQueryHandler)
+
     container.register(ICommandMediator, factory=lambda: _init_command_mediator(container), scope=punq.Scope.singleton)
+    container.register(IQueryMediator, factory=lambda: _init_query_mediator(container), scope=punq.Scope.singleton)
     return container
