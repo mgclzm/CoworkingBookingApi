@@ -45,3 +45,10 @@ class SqlAlchemyRefreshTokenRepository(BaseRefreshTokenRepository):
         result = await self._session.execute(select(RefreshTokenModel).where(RefreshTokenModel.user_id == user_id))
         result = result.scalars().all()
         return [_convert_refresh_token_model_to_entity(token) for token in result]
+    
+    async def find_by_token_id(self, token_id: str) -> RefreshToken | None:
+        result = await self._session.execute(select(RefreshTokenModel).where(RefreshTokenModel.token_id == token_id))
+        result = result.scalar_one_or_none()
+        if result is None:
+            return None
+        return _convert_refresh_token_model_to_entity(result)

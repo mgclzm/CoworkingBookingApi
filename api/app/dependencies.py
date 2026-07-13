@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer
 
 from api.app.container import init_container, typed_resolve
-from api.routes.user.security import AuthError, CompositeRefreshTokenValidator, RefreshTokenClaimsValidator, RefreshTokenJtiValidator, RefreshTokenTypeValidator, TokenType
+from api.routes.user.security import AuthError, CompositeRefreshTokenValidator, RefreshTokenClaimsValidator, RefreshTokenData, RefreshTokenJtiValidator, RefreshTokenTypeValidator, TokenType
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from infra.settings.settings import settings
 from logic.uow.base import BaseUnitOfWork
@@ -24,7 +24,7 @@ refresh_oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login', auto_error=False
 access_oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/access', auto_error=False, refreshUrl='login')
 
 async def require_refresh_token(refresh_token: Annotated[Optional[str], Security(refresh_oauth2_scheme)],
-                          container: Annotated[punq.Container, Depends(init_container)]) -> str:
+                          container: Annotated[punq.Container, Depends(init_container)]) -> RefreshTokenData:
     if refresh_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Refresh token is not provided')
     
@@ -45,7 +45,8 @@ async def require_refresh_token(refresh_token: Annotated[Optional[str], Security
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message) from ex
     
     user_id = cast(str, payload.get('sub'))
-    return user_id
+    jti = cast(str, payload.get('jti'))
+    return RefreshTokenData(sub=user_id, jti=jti)
 
 def require_access_token(access_token: Annotated[Optional[str], Security(access_oauth2_scheme)]) -> str:
     if access_token is None:

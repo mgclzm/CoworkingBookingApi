@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from api.routes.user.security import TokenType, encode_access_token, encode_refresh_token
-from api.routes.user.shemas import AccessTokenResponseSchema, RefreshTokenResponseSchema
+from api.routes.user.security import RefreshTokenNotFoundError, TokenType, encode_access_token, encode_refresh_token
+from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema
 from domain.entities.refresh_token import RefreshToken
 from domain.entities.user import AppUser
 from domain.exceptions.errors import EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
 from domain.values.user import Email, Name, Password
-from logic.commands.user_commands import RegisterUserCommand
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
 from logic.handlers.base import CommandHandler, QueryHandler
-from logic.queries.user.user_queries import AccessTokenQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
 from logic.uow.base import BaseUnitOfWork
 from infra.settings.settings import settings
 
@@ -68,3 +68,33 @@ class AccessTokenQueryHandler(QueryHandler[AccessTokenQuery, AccessTokenResponse
         encoded_access_token = encode_access_token(sub)
         response_schema = AccessTokenResponseSchema(token_type=TokenType.ACCESS, access_token=encoded_access_token)
         return response_schema
+    
+@dataclass
+class GetCurrentUserQueryHandler(QueryHandler[GetCurrentUserQuery, GetCurrentUserResponseSchema]):
+    _uow: BaseUnitOfWork
+    async def handle(self, query: GetCurrentUserQuery) -> GetCurrentUserResponseSchema:
+        async with self._uow:
+            found_user = await self._uow.user_repository.find_by_user_id(query.user_id)
+            if found_user is None:
+                raise UserNotFoundError(f'User not found')
+            user_id = found_user.user_id
+            first_name = found_user.name.first_name
+            last_name = found_user.name.last_name
+            email = found_user.email.value
+            response_schema = GetCurrentUserResponseSchema(user_id=user_id, first_name=first_name, 
+                                                           last_name=last_name, email=email)
+            return response_schema
+
+@dataclass
+class LogoutCommandHandler(CommandHandler[LogoutCommand]):
+    _uow: BaseUnitOfWork
+    async def handle(self, command: LogoutCommand) -> None:
+        async with self._uow:
+            found_token = await self._uow.refresh_token_repository.find_by_token_id(command.jti)
+            if found_token is None:
+                raise RefreshTokenNotFoundError(f'Refresh token not found')
+            
+            found_token.revoke()
+
+            await self._uow.refresh_token_repository.merge(found_token)
+            await self._uow.commit()

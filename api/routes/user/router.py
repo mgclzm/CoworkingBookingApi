@@ -3,12 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from api.routes.user.security import AuthError, RefreshTokenData
 from domain.exceptions.errors import EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
-from api.app.dependecies import get_command_mediator, get_query_mediator, require_refresh_token
-from api.routes.user.shemas import AccessTokenResponseSchema, RefreshTokenResponseSchema, RegisterUserSchema
-from logic.commands.user_commands import RegisterUserCommand
+from api.app.dependencies import get_command_mediator, get_query_mediator, require_access_token, require_refresh_token
+from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema, RegisterUserSchema
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
 from logic.mediator.base import ICommandMediator, IQueryMediator
-from logic.queries.user.user_queries import AccessTokenQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
 
 user_router = APIRouter(prefix='/v1', tags=['App user'])
 
@@ -44,20 +45,55 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     refresh_token_query = RefreshTokenQuery(form_data.username, form_data.password)
     try:
         response_schema = await query_mediator.execute_query(refresh_token_query)
-        return response_schema
     except (UserNotFoundError, InvalidUserCredentialsError) as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message) from ex
+    else:
+        return response_schema
 
-@user_router.post('/access',
+@user_router.post('/refresh',
                   status_code=status.HTTP_200_OK,
                   response_model=AccessTokenResponseSchema,
                   responses={
                       status.HTTP_200_OK: {'description': 'Return new access token'},
                       status.HTTP_401_UNAUTHORIZED: {'description': 'Refresh token is not valid or not provided'}
                   },
-                  summary='Entpoint to obtain new access token, require valid refresh token')
-async def get_access_token(user_id: Annotated[str, Depends(require_refresh_token)],
+                  summary='Endpoint to obtain new access token, require valid refresh token')
+async def get_access_token(token_data: Annotated[RefreshTokenData, Depends(require_refresh_token)],
                            query_mediator: Annotated[IQueryMediator, Depends(get_query_mediator)]):
-    access_token_query = AccessTokenQuery(user_id)
+    access_token_query = AccessTokenQuery(token_data.sub)
     response_schema = await query_mediator.execute_query(access_token_query)
     return response_schema
+
+@user_router.get('/me',
+                 status_code=status.HTTP_200_OK,
+                 response_model=GetCurrentUserResponseSchema,
+                 responses={
+                     status.HTTP_200_OK: {'description': 'Return information about current authenticated user'},
+                     status.HTTP_401_UNAUTHORIZED: {'description': 'User is not authenticated'},
+                     status.HTTP_404_NOT_FOUND: {'description': 'User not found'}
+                 },
+                 summary='Endpoint to obtain information about current authenticated user')
+async def get_current_user(user_id: Annotated[str, Depends(require_access_token)],
+                           query_mediator: Annotated[IQueryMediator, Depends(get_query_mediator)]):
+    get_current_user_query = GetCurrentUserQuery(user_id)
+    try:
+        response_schema = await query_mediator.execute_query(get_current_user_query)
+    except UserNotFoundError as ex:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
+    else:
+        return response_schema
+    
+@user_router.post('/logout',
+                  status_code=status.HTTP_200_OK,
+                  responses={
+                      status.HTTP_200_OK: {'description': 'Logout success'},
+                      status.HTTP_401_UNAUTHORIZED: {'description': 'User is not authenticated'}
+                  },
+                  summary='Endpoint for logout, revokes provided refresh token')
+async def logout(token_data: Annotated[RefreshTokenData, Depends(require_refresh_token)],
+                 command_mediator: Annotated[ICommandMediator, Depends(get_command_mediator)]):
+    logout_command = LogoutCommand(jti=token_data.jti)
+    try:
+        await command_mediator.execute_command(logout_command)
+    except AuthError as ex:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message)

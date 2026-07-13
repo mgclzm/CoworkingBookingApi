@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 import jwt
 
@@ -27,6 +27,10 @@ def encode_refresh_token(refresh_token: RefreshToken) -> str:
     }
     encoded_refresh_token = jwt.encode(payload, secret, algorithm)
     return encoded_refresh_token
+
+class RefreshTokenData(NamedTuple):
+    sub: str
+    jti: str
 
 def encode_access_token(sub: str) -> str:
     algorithm = settings.token_algorithm

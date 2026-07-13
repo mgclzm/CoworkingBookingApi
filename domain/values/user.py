@@ -5,13 +5,13 @@ from domain.exceptions.errors import InvalidNameError, InvalidPasswordError
 
 @dataclass(frozen=True)
 class Name:
-    firstname: str
-    lastname: str
+    first_name: str
+    last_name: str
 
     def __post_init__(self):
-        if not self.firstname.strip() or not self.lastname.strip():
+        if not self.first_name.strip() or not self.last_name.strip():
             raise InvalidNameError('Firstname and lastname cannot be empty')
-        if len(self.firstname) > 50 or len(self.lastname) > 50:
+        if len(self.first_name) > 50 or len(self.last_name) > 50:
             raise InvalidNameError('Firstname and lastname length cannot be bigger then 50 characters')
 
 @dataclass(frozen=True)
@@ -29,5 +29,5 @@ class Password:
 
     def __post_init__(self):
         if len(self.value) > 255:
-            raise InvalidPasswordError('Password lenght cannot be bigger then 255 characters')
+            raise InvalidPasswordError('Password length cannot be bigger then 255 characters')
         

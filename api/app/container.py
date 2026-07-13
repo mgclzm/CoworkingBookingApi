@@ -4,21 +4,23 @@ import punq
 
 from functools import lru_cache
 
-from logic.commands.user_commands import RegisterUserCommand
-from logic.handlers.user.handlers import AccessTokenQueryHandler, RefreshTokenQueryHandler, RegisterUserCommandHandler
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
+from logic.handlers.user.handlers import AccessTokenQueryHandler, GetCurrentUserQueryHandler, LogoutCommandHandler, RefreshTokenQueryHandler, RegisterUserCommandHandler
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.mediator.mediator import CommandMediator, QueryMediator
-from logic.queries.user.user_queries import AccessTokenQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
 from logic.uow.base import BaseUnitOfWork
 from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
 COMMAND_AND_HANDLERS_PAIRS = [
     (RegisterUserCommand, [RegisterUserCommandHandler]),
+    (LogoutCommand, [LogoutCommandHandler])
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
     (RefreshTokenQuery, RefreshTokenQueryHandler),
-    (AccessTokenQuery, AccessTokenQueryHandler)
+    (AccessTokenQuery, AccessTokenQueryHandler),
+    (GetCurrentUserQuery, GetCurrentUserQueryHandler),
 ]
 def _init_command_mediator(container: punq.Container) -> CommandMediator:
     command_mediator = CommandMediator()
@@ -48,9 +50,11 @@ def _init_container() -> punq.Container:
     container.register(BaseUnitOfWork, SqlAlchemyUnitOfWork, scope=punq.Scope.singleton)
     
     container.register(RegisterUserCommandHandler)
+    container.register(LogoutCommandHandler)
 
     container.register(RefreshTokenQueryHandler)
     container.register(AccessTokenQueryHandler)
+    container.register(GetCurrentUserQueryHandler)
 
     container.register(ICommandMediator, factory=lambda: _init_command_mediator(container), scope=punq.Scope.singleton)
     container.register(IQueryMediator, factory=lambda: _init_query_mediator(container), scope=punq.Scope.singleton)

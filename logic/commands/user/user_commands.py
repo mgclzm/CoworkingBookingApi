@@ -8,3 +8,7 @@ class RegisterUserCommand(BaseCommand):
     last_name: str
     email: str
     password: str
+
+@dataclass
+class LogoutCommand(BaseCommand):
+    jti: str

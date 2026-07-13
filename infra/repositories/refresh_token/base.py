@@ -7,3 +7,7 @@ class BaseRefreshTokenRepository(BaseRepository[RefreshToken]):
     @abstractmethod
     async def find_all_by_user_id(self, user_id: str) -> list[RefreshToken]:
         ...
+    
+    @abstractmethod
+    async def find_by_token_id(self, token_id: str) -> RefreshToken | None:
+        ...

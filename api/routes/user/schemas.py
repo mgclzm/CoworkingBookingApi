@@ -13,3 +13,9 @@ class RefreshTokenResponseSchema(BaseModel):
 class AccessTokenResponseSchema(BaseModel):
     token_type: str
     access_token: str
+
+class GetCurrentUserResponseSchema(BaseModel):
+    user_id: str
+    first_name: str
+    last_name: str
+    email: str

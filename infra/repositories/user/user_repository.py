@@ -18,8 +18,8 @@ def _convert_user_model_to_entity(user_model: AppUserModel) -> AppUser:
 
 def _convert_user_entity_to_model(user: AppUser) -> AppUserModel:
     user_id = user.user_id
-    firstname = user.name.firstname
-    lastname = user.name.lastname
+    firstname = user.name.first_name
+    lastname = user.name.last_name
     email = user.email.value
     password = user.password.value
     creation_time = user.creation_time
@@ -51,8 +51,8 @@ class SqlAlchemyUserRepository(BaseUserRepository):
         return _convert_user_model_to_entity(result)
         
     async def find_all_by_name(self, name: Name) -> list[AppUser]:
-        firstname = name.firstname
-        lastname = name.lastname
+        firstname = name.first_name
+        lastname = name.last_name
         result = await self._session.execute(select(AppUserModel)
                                              .where(and_(AppUserModel.firstname == firstname, 
                                                          AppUserModel.lastname == lastname)))
