@@ -4,8 +4,7 @@ from datetime import datetime, timedelta, timezone
 from api.routes.user.security import RefreshTokenNotFoundError, TokenType, encode_access_token, encode_refresh_token
 from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema
 from domain.entities.refresh_token import RefreshToken
-from domain.entities.user import AppUser
-from domain.exceptions.errors import EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
+from domain.entities.user import AppUser, EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
 from domain.values.user import Email, Name, Password
 from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
 from logic.handlers.base import CommandHandler, QueryHandler
@@ -23,7 +22,7 @@ class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand]):
     async def handle(self, command: RegisterUserCommand) -> None:
         async with self._uow:
             if await self._uow.user_repository.find_by_email(command.email):
-                raise EmailAlreadyExistError(f'Email address "{command.email}" already exist')
+                raise EmailAlreadyExistError(command.email)
             
             user_name = Name(command.first_name, command.last_name)
             email = Email(command.email)
@@ -42,12 +41,12 @@ class RefreshTokenQueryHandler(QueryHandler[RefreshTokenQuery, RefreshTokenRespo
         async with self._uow:
             found_user = await self._uow.user_repository.find_by_email(query.email)
             if not found_user:
-                raise UserNotFoundError(f'User with "{query.email}" email not found')
+                raise UserNotFoundError(email=query.email)
             ph = PasswordHasher()
             try:
                 ph.verify(found_user.password.value, query.password)
             except VerificationError:
-                raise InvalidUserCredentialsError('Invalid user credentials')
+                raise InvalidUserCredentialsError()
             
             sub = found_user.user_id
             exp = datetime.now(tz=timezone.utc) + timedelta(seconds=settings.refresh_token_lifetime)
@@ -76,7 +75,7 @@ class GetCurrentUserQueryHandler(QueryHandler[GetCurrentUserQuery, GetCurrentUse
         async with self._uow:
             found_user = await self._uow.user_repository.find_by_user_id(query.user_id)
             if found_user is None:
-                raise UserNotFoundError(f'User not found')
+                raise UserNotFoundError(user_id=query.user_id)
             user_id = found_user.user_id
             first_name = found_user.name.first_name
             last_name = found_user.name.last_name
@@ -92,7 +91,7 @@ class LogoutCommandHandler(CommandHandler[LogoutCommand]):
         async with self._uow:
             found_token = await self._uow.refresh_token_repository.find_by_token_id(command.jti)
             if found_token is None:
-                raise RefreshTokenNotFoundError(f'Refresh token not found')
+                raise RefreshTokenNotFoundError(command.jti)
             
             found_token.revoke()
 

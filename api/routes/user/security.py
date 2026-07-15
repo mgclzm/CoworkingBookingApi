@@ -45,23 +45,47 @@ def encode_access_token(sub: str) -> str:
     return encoded_access_token
 
 @dataclass
-class AuthError(Exception):
-    message: str
+class AuthException(ABC, BaseException):
+    @property
+    @abstractmethod
+    def message(self) -> str:
+        ...
 
-class WrongTokenTypeError(AuthError):
-    ...
+@dataclass
+class WrongTokenTypeError(AuthException):
+    expected_type: str
 
-class MissingClaimError(AuthError):
-    ...
+    @property
+    def message(self) -> str:
+        return f'Token type is not "{self.expected_type}"'
 
-class RefreshTokenNotFoundError(AuthError):
-    ...
+@dataclass
+class MissingClaimError(AuthException):
+    missing_claim: str
 
-class InvalidTokenIdError(AuthError):
-    ...
+    @property
+    def message(self) -> str:
+        return f'Token missing "{self.missing_claim}" claim'
 
-class TokenRevokedError(AuthError):
-    ...
+@dataclass
+class RefreshTokenNotFoundError(AuthException):
+    jti: str
+
+    @property
+    def message(self) -> str:
+        return f'Token with "{self.jti}" id not found'
+
+@dataclass
+class InvalidTokenIdError(AuthException):
+    @property
+    def message(self) -> str:
+        return 'Token id mismatch'
+
+@dataclass
+class TokenRevokedError(AuthException):
+    @property
+    def message(self) -> str:
+        return 'Token has been revoked'
 
 class IRefreshTokenValidator(ABC):
     @abstractmethod
@@ -81,26 +105,26 @@ class CompositeRefreshTokenValidator(IRefreshTokenValidator):
 class RefreshTokenClaimsValidator(IRefreshTokenValidator):
     async def validate(self, refresh_token_payload: dict[str, Any]):
         if refresh_token_payload.get('sub') is None:
-            raise MissingClaimError('Token missing "sub" claim')
+            raise MissingClaimError('sub')
         
         if refresh_token_payload.get('jti') is None:
-            raise MissingClaimError('Token missing "jti" claim')
+            raise MissingClaimError('jti')
         
         if refresh_token_payload.get('iat') is None:
-            raise MissingClaimError('Token missing "iat" claim')
+            raise MissingClaimError('iat')
         
         if refresh_token_payload.get('exp') is None:
-            raise MissingClaimError('Token missing "exp" claim')
+            raise MissingClaimError('exp')
         
         if refresh_token_payload.get('type') is None:
-            raise MissingClaimError('Token missing "type" claim')
+            raise MissingClaimError('type')
 
 @dataclass(frozen=True, slots=True)
 class RefreshTokenTypeValidator(IRefreshTokenValidator):
     async def validate(self, refresh_token_payload: dict[str, Any]) -> None:
         token_type = cast(TokenType, refresh_token_payload.get('type'))
         if token_type != TokenType.REFRESH:
-            raise WrongTokenTypeError('Token type is not "refresh"')
+            raise WrongTokenTypeError(expected_type=TokenType.REFRESH)
 
 @dataclass(frozen=True, slots=True)
 class RefreshTokenJtiValidator(IRefreshTokenValidator):
@@ -119,6 +143,6 @@ class RefreshTokenJtiValidator(IRefreshTokenValidator):
             )
 
             if matching_token is None:
-                raise InvalidTokenIdError('Token id mismatch')
+                raise InvalidTokenIdError()
             if matching_token.revoked:
-                raise TokenRevokedError('Token has been revoked')
+                raise TokenRevokedError()

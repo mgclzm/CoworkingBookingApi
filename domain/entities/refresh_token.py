@@ -2,8 +2,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import uuid4
 
+from domain.entities.base import BaseEntity
+
 @dataclass
-class RefreshToken:
+class RefreshToken(BaseEntity):
     token_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
     user_id: str
     expires_at: datetime

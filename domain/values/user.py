@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from email_validator import validate_email, EmailNotValidError
 
-from domain.exceptions.errors import InvalidNameError, InvalidPasswordError
+from domain.entities.user import InvalidNameError, InvalidPasswordError
 
 @dataclass(frozen=True)
 class Name:
@@ -10,9 +10,9 @@ class Name:
 
     def __post_init__(self):
         if not self.first_name.strip() or not self.last_name.strip():
-            raise InvalidNameError('Firstname and lastname cannot be empty')
+            raise InvalidNameError(first_name=self.first_name, last_name=self.last_name)
         if len(self.first_name) > 50 or len(self.last_name) > 50:
-            raise InvalidNameError('Firstname and lastname length cannot be bigger then 50 characters')
+            raise InvalidNameError(first_name=self.first_name, last_name=self.last_name)
 
 @dataclass(frozen=True)
 class Email:
@@ -29,5 +29,5 @@ class Password:
 
     def __post_init__(self):
         if len(self.value) > 255:
-            raise InvalidPasswordError('Password length cannot be bigger then 255 characters')
+            raise InvalidPasswordError(self.value)
         

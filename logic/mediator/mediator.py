@@ -2,11 +2,27 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Iterable
 
-from domain.exceptions.errors import CommandHandlersNotFoundError, QueryHandlerNotFoundError
+from domain.entities.base import ApplicationException
 from logic.commands.base import BaseCommand
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.handlers.base import CommandHandler, QueryHandler, QueryT
 from logic.queries.base import BaseQuery, ResultT
+
+@dataclass
+class CommandHandlersNotFoundError(ApplicationException):
+    command_type: type[BaseCommand]
+
+    @property
+    def message(self) -> str:
+        return f'There are no registered handlers for "{self.command_type}" command'
+
+@dataclass
+class QueryHandlerNotFoundError(ApplicationException):
+    query_type: type[BaseQuery]
+
+    @property
+    def message(self) -> str:
+        return f'Handler for "{self.query_type}" query not registered'
 
 @dataclass
 class CommandMediator(ICommandMediator):
@@ -19,7 +35,7 @@ class CommandMediator(ICommandMediator):
         command_type = type(command)
         handlers = self._command_register[command_type]
         if not handlers:
-            raise CommandHandlersNotFoundError(f'There are no registered handlers for "{command_type}" command')
+            raise CommandHandlersNotFoundError(command_type)
         for handler in handlers:
             await handler.handle(command)
 
@@ -34,5 +50,5 @@ class QueryMediator(IQueryMediator):
         query_type = type(query)
         handler = self._query_register.get(query_type)
         if not handler:
-            raise QueryHandlerNotFoundError(f'Handler for "{query_type}" query not registered')
+            raise QueryHandlerNotFoundError(query_type)
         return await handler.handle(query)

@@ -3,10 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from api.routes.user.security import AuthError, RefreshTokenData
-from domain.exceptions.errors import EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
+from api.routes.user.security import AuthException, RefreshTokenData
+
 from api.app.dependencies import get_command_mediator, get_query_mediator, require_access_token, require_refresh_token
 from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema, RegisterUserSchema
+from domain.entities.base import LogicException
 from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
@@ -29,7 +30,7 @@ async def register_user(register_user_schema: RegisterUserSchema,
     register_user_command = RegisterUserCommand(first_name, last_name, email, password)
     try:
         await command_mediator.execute_command(register_user_command)
-    except EmailAlreadyExistError as ex:
+    except LogicException as ex:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=ex.message) from ex
 
 @user_router.post('/login', 
@@ -45,7 +46,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     refresh_token_query = RefreshTokenQuery(form_data.username, form_data.password)
     try:
         response_schema = await query_mediator.execute_query(refresh_token_query)
-    except (UserNotFoundError, InvalidUserCredentialsError) as ex:
+    except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message) from ex
     else:
         return response_schema
@@ -78,7 +79,7 @@ async def get_current_user(user_id: Annotated[str, Depends(require_access_token)
     get_current_user_query = GetCurrentUserQuery(user_id)
     try:
         response_schema = await query_mediator.execute_query(get_current_user_query)
-    except UserNotFoundError as ex:
+    except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
     else:
         return response_schema
@@ -95,5 +96,5 @@ async def logout(token_data: Annotated[RefreshTokenData, Depends(require_refresh
     logout_command = LogoutCommand(jti=token_data.jti)
     try:
         await command_mediator.execute_command(logout_command)
-    except AuthError as ex:
+    except AuthException as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message)
