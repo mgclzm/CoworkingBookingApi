@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.entities.refresh_token import RefreshToken
-from infra.repositories.refresh_token import refresh_token_model
 from infra.repositories.refresh_token.base import BaseRefreshTokenRepository
 from infra.repositories.refresh_token.refresh_token_model import RefreshTokenModel
 

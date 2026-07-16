@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer
 
 from api.app.container import init_container, typed_resolve
-from api.routes.user.security import AuthError, CompositeRefreshTokenValidator, RefreshTokenClaimsValidator, RefreshTokenData, RefreshTokenJtiValidator, RefreshTokenTypeValidator, TokenType
+from api.routes.user.security import AuthException, CompositeRefreshTokenValidator, RefreshTokenClaimsValidator, RefreshTokenData, RefreshTokenJtiValidator, RefreshTokenTypeValidator, TokenType
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from infra.settings.settings import settings
 from logic.uow.base import BaseUnitOfWork
@@ -41,7 +41,7 @@ async def require_refresh_token(refresh_token: Annotated[Optional[str], Security
     )
     try:
         await refresh_token_validator.validate(payload)
-    except AuthError as ex:
+    except AuthException as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message) from ex
     
     user_id = cast(str, payload.get('sub'))
@@ -53,7 +53,7 @@ def require_access_token(access_token: Annotated[Optional[str], Security(access_
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Access token is not provided')
     
     try:
-        payload = jwt.decode(access_token, settings.acess_token_secret, algorithms=[settings.token_algorithm])
+        payload = jwt.decode(access_token, settings.access_token_secret, algorithms=[settings.token_algorithm])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Provided token is expired')
     except jwt.InvalidTokenError:

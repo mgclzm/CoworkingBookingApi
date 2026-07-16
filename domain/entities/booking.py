@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 from uuid import uuid4
 from enum import Enum
 
@@ -11,15 +10,6 @@ class BookingStatus(str, Enum):
     CONFIRMED = 'CONFIRMED'
     CANCELLED = 'CANCELLED'
     COMPLETED = 'COMPLETED'
-
-@dataclass
-class InvalidBookingTimeError(ApplicationException):
-    start_time: datetime
-    end_time: datetime
-
-    @property
-    def message(self) -> str:
-        return f'Start time must be before end time, got start time = {self.start_time} end time = {self.end_time}'
 
 @dataclass
 class BookingConfirmError(ApplicationException):

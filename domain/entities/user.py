@@ -5,22 +5,6 @@ from uuid import uuid4
 from domain.entities.base import ApplicationException, BaseEntity, LogicException
 from domain.values.user import Email, Name, Password
 
-@dataclass
-class InvalidNameError(ApplicationException):
-    first_name: str
-    last_name: str
-
-    @property
-    def message(self) -> str:
-        return f'First name and last name cannot be empty or bigger then 50 characters, got first name = {self.first_name} last name = {self.last_name}'
-
-@dataclass
-class InvalidPasswordError(ApplicationException):
-    password_value: str
-
-    @property
-    def message(self) -> str:
-        return f'Password length cannot be bigger then 255 characters, got {len(self.password_value)}'
 
 @dataclass
 class EmailAlreadyExistError(LogicException):

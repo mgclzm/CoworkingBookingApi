@@ -1,7 +1,25 @@
 from dataclasses import dataclass
 from email_validator import validate_email, EmailNotValidError
 
-from domain.entities.user import InvalidNameError, InvalidPasswordError
+from domain.entities.base import ApplicationException
+
+@dataclass
+class InvalidNameError(ApplicationException):
+    first_name: str
+    last_name: str
+
+    @property
+    def message(self) -> str:
+        return f'First name and last name cannot be empty or bigger then 50 characters, got first name = {self.first_name} last name = {self.last_name}'
+
+@dataclass
+class InvalidPasswordError(ApplicationException):
+    password_value: str
+
+    @property
+    def message(self) -> str:
+        return f'Password length cannot be bigger then 255 characters, got {len(self.password_value)}'
+
 
 @dataclass(frozen=True)
 class Name:
