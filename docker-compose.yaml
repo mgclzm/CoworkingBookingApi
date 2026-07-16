@@ -56,7 +56,6 @@ services:
 
 volumes:
   pgadmin_data:
-
   postgres_db_data:
     driver: local
 

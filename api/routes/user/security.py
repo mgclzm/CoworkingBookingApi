@@ -25,7 +25,7 @@ def encode_refresh_token(refresh_token: RefreshToken) -> str:
         'exp': refresh_token.expires_at,
         'type': TokenType.REFRESH
     }
-    encoded_refresh_token = jwt.encode(payload, secret, algorithm)
+    encoded_refresh_token = jwt.encode(payload, key=secret, algorithm=algorithm)
     return encoded_refresh_token
 
 class RefreshTokenData(NamedTuple):
@@ -34,7 +34,7 @@ class RefreshTokenData(NamedTuple):
 
 def encode_access_token(sub: str) -> str:
     algorithm = settings.token_algorithm
-    secret = settings.access_token_lifetime
+    secret = settings.access_token_secret
     expiration = datetime.now(timezone.utc) + timedelta(seconds=settings.access_token_lifetime)
     payload = {
         'sub': sub,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from domain.entities.base import BaseEntity
@@ -10,7 +10,7 @@ class RefreshToken(BaseEntity):
     user_id: str
     expires_at: datetime
     revoked: bool = field(default=False)
-    created_at: datetime = field(default_factory=datetime.now, kw_only=True)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc), kw_only=True)
 
     def __eq__(self, other: RefreshToken) -> bool:
         return self.token_id == other.token_id
@@ -19,7 +19,7 @@ class RefreshToken(BaseEntity):
         return hash(self.token_id)
 
     def is_valid(self) -> bool:
-        return not self.revoked and datetime.now() < self.expires_at
+        return not self.revoked and datetime.now(timezone.utc) < self.expires_at
     
     def revoke(self) -> None:
         self.revoked = True 

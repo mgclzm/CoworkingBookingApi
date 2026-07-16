@@ -59,8 +59,8 @@ class SqlAlchemyUserRepository(BaseUserRepository):
         result = result.scalars().all()
         return [_convert_user_model_to_entity(user) for user in result]
     
-    async def find_by_email(self, email: Email) -> AppUser | None:
-        result = await self._session.execute(select(AppUserModel).where(AppUserModel.email == email.value))
+    async def find_by_email(self, email: str) -> AppUser | None:
+        result = await self._session.execute(select(AppUserModel).where(AppUserModel.email == email))
         result = result.scalar_one_or_none()
         if not result:
             return None
