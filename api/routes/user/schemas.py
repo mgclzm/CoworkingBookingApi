@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, EmailStr
 
 class RegisterUserSchema(BaseModel):
@@ -6,7 +8,14 @@ class RegisterUserSchema(BaseModel):
     email: EmailStr
     password: str = Field(min_length=3, max_length=255)
 
-class RefreshTokenResponseSchema(BaseModel):
+class RegisterUserResponseSchema(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    user_id: str
+    created_at: datetime
+
+class IssueRefreshTokenResponseSchema(BaseModel):
     refresh_token: str
     access_token: str
 

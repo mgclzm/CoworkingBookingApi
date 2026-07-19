@@ -1,17 +1,12 @@
 from dataclasses import dataclass
 
-from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema
+from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, IssueRefreshTokenResponseSchema
 from logic.queries.base import BaseQuery
 
-@dataclass
-class RefreshTokenQuery(BaseQuery[RefreshTokenResponseSchema]):
-    email: str
-    password: str
-
-@dataclass
+@dataclass(frozen=True)
 class AccessTokenQuery(BaseQuery[AccessTokenResponseSchema]):
     user_id: str
 
-@dataclass
+@dataclass(frozen=True)
 class GetCurrentUserQuery(BaseQuery[GetCurrentUserResponseSchema]):
     user_id: str

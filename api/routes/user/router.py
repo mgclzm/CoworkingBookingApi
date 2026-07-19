@@ -6,18 +6,23 @@ from fastapi.security import OAuth2PasswordRequestForm
 from api.routes.user.security import AuthException, RefreshTokenData
 
 from api.app.dependencies import get_command_mediator, get_query_mediator, require_access_token, require_refresh_token
-from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema, RegisterUserSchema
+from api.routes.user.schemas import (AccessTokenResponseSchema, 
+                                     GetCurrentUserResponseSchema, 
+                                     IssueRefreshTokenResponseSchema, 
+                                     RegisterUserResponseSchema, 
+                                     RegisterUserSchema)
 from domain.entities.base import LogicException
-from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand, IssueRefreshTokenCommand
 from logic.mediator.base import ICommandMediator, IQueryMediator
-from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
 
 user_router = APIRouter(prefix='/v1', tags=['App user'])
 
 @user_router.post('/user/registration',
                   status_code=status.HTTP_201_CREATED,
                   responses={
-                      status.HTTP_201_CREATED: {'description': 'User successfully registered'}, 
+                      status.HTTP_201_CREATED: {'description': 'User successfully registered',
+                                                'model': RegisterUserResponseSchema}, 
                       status.HTTP_409_CONFLICT: {'description': 'User registration was unsuccessful'}
                   },
                   summary='Public endpoint for user registration')
@@ -29,9 +34,11 @@ async def register_user(register_user_schema: RegisterUserSchema,
     password = register_user_schema.password
     register_user_command = RegisterUserCommand(first_name, last_name, email, password)
     try:
-        await command_mediator.execute_command(register_user_command)
+        response_schema = await command_mediator.execute_command(register_user_command)
     except LogicException as ex:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=ex.message) from ex
+    else:
+        return response_schema
 
 @user_router.post('/login', 
                   status_code=status.HTTP_200_OK, 
@@ -39,13 +46,13 @@ async def register_user(register_user_schema: RegisterUserSchema,
                       status.HTTP_200_OK: {'description': 'Return new refresh and access token pair'},
                       status.HTTP_401_UNAUTHORIZED: {'description': 'User is not registered, or the data provided is incorrect'}
                   },
-                  response_model=RefreshTokenResponseSchema,
+                  response_model=IssueRefreshTokenResponseSchema,
                   summary='Endpoint to obtain refresh token')
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                query_mediator: Annotated[IQueryMediator, Depends(get_query_mediator)]):
-    refresh_token_query = RefreshTokenQuery(form_data.username, form_data.password)
+                command_mediator: Annotated[ICommandMediator, Depends(get_command_mediator)]):
+    issue_refresh_token_command = IssueRefreshTokenCommand(form_data.username, form_data.password)
     try:
-        response_schema = await query_mediator.execute_query(refresh_token_query)
+        response_schema = await command_mediator.execute_command(issue_refresh_token_command) 
     except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=ex.message) from ex
     else:

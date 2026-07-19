@@ -2,9 +2,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import uuid4
 
-from domain.entities.base import ApplicationException, BaseEntity, LogicException
+from domain.entities.base import BaseEntity, LogicException
 from domain.values.user import Email, Name, Password
-
 
 @dataclass
 class EmailAlreadyExistError(LogicException):
@@ -37,7 +36,7 @@ class AppUser(BaseEntity):
     name: Name 
     email: Email 
     password: Password 
-    creation_time: datetime = field(default_factory=lambda: datetime.now(), kw_only=True) 
+    creation_time: datetime = field(default_factory=lambda: datetime.now(), kw_only=True)
     is_active: bool = field(default=True)
 
     def __eq__(self, other: AppUser) -> bool:

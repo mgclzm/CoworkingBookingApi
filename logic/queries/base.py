@@ -1,7 +1,10 @@
 from abc import ABC
-from typing import Generic, TypeVar
+from dataclasses import dataclass
+from typing import Any, Generic, TypeVar
 
-ResultT = TypeVar('ResultT')
+QueryResultT = TypeVar('QueryResultT', bound=Any)
 
-class BaseQuery(ABC, Generic[ResultT]):
+@dataclass(frozen=True)
+class BaseQuery(Generic[QueryResultT]):
     ...
+

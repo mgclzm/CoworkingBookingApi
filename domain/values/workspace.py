@@ -34,7 +34,15 @@ class InvalidDescriptionError(ApplicationException):
 
     @property
     def message(self) -> str:
-        return f'Workspace description must me less then 1000, actual length {len(self.description_value)}'
+        return f'Workspace description must be less then 1000 characters, actual length {len(self.description_value)}'
+    
+@dataclass
+class InvalidLocationError(ApplicationException):
+    location_value: str
+
+    @property
+    def message(self) -> str:
+        return f'Workspace location cannot be empty and must be less then 200 characters, got {len(self.location_value)}'
 
 @dataclass(frozen=True)
 class Title:
@@ -68,5 +76,11 @@ class WorkspaceDescription:
     def __post_init__(self):
         if len(self.value) > 1000:
             raise InvalidDescriptionError(self.value)
-    
 
+@dataclass(frozen=True)
+class WorkspaceLocation:
+    value: str
+
+    def __post_init__(self):
+        if len(self.value) > 200 or self.value.isspace():
+            raise InvalidLocationError(self.value)

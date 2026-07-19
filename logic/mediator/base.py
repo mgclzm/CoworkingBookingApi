@@ -1,22 +1,25 @@
 from abc import ABC, abstractmethod
+from typing import Iterable
 from logic.handlers.base import CommandHandler, QueryHandler
-from logic.commands.base import BaseCommand
-from logic.queries.base import BaseQuery, ResultT
+from logic.commands.base import BaseCommand, CommandResultT
+from logic.queries.base import BaseQuery, QueryResultT
 
 class ICommandMediator(ABC):
     @abstractmethod
-    def register_command(self, command_type: type[BaseCommand], handler: CommandHandler) -> None:
+    def register_command(self, command_type: type[BaseCommand[CommandResultT]], 
+                         handler: CommandHandler[BaseCommand[CommandResultT], CommandResultT]) -> None:
         ... 
     
     @abstractmethod
-    async def execute_command(self, command: BaseCommand) -> None:
+    async def execute_command(self, command: BaseCommand[CommandResultT]) -> CommandResultT:
         ...
 
 class IQueryMediator(ABC):
     @abstractmethod
-    def register_query(self, query_type: type[BaseQuery[ResultT]], handler: QueryHandler[BaseQuery[ResultT], ResultT]) -> None:
+    def register_query(self, query_type: type[BaseQuery[QueryResultT]], 
+                       handler: QueryHandler[BaseQuery[QueryResultT], QueryResultT]) -> None:
         ...
     
     @abstractmethod
-    async def execute_query(self, query: BaseQuery[ResultT]) -> ResultT:
+    async def execute_query(self, query: BaseQuery[QueryResultT]) -> QueryResultT:
         ...

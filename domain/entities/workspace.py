@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from datetime import time
 from uuid import uuid4
-from domain.entities.base import ApplicationException, BaseEntity, InactiveEntityUsageError, LogicException
-from domain.values.workspace import Number, Title, WorkingTime, WorkspaceDescription
+from domain.entities.base import BaseEntity, InactiveEntityUsageError, LogicException
+from domain.entities.user import AppUser
+from domain.values.workspace import Number, Title, WorkingTime, WorkspaceDescription, WorkspaceLocation
 
 @dataclass    
 class WorkplaceAlreadyExistError(LogicException):
@@ -31,8 +31,10 @@ class Workplace(BaseEntity):
 class Workspace(BaseEntity):
     workspace_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
     _workplaces: set[Workplace] = field(default_factory=set, kw_only=True)
+    location: WorkspaceLocation
     working_time: WorkingTime 
     description: WorkspaceDescription
+    owner_id: str
     is_active: bool = field(default=True)
 
     def register_workplace(self, workplace: Workplace) -> None:

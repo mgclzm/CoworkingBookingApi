@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from api.routes.user.security import RefreshTokenNotFoundError, TokenType, encode_access_token, encode_refresh_token
-from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, RefreshTokenResponseSchema
+from api.routes.user.schemas import AccessTokenResponseSchema, GetCurrentUserResponseSchema, IssueRefreshTokenResponseSchema, RegisterUserResponseSchema
 from domain.entities.refresh_token import RefreshToken
 from domain.entities.user import AppUser, EmailAlreadyExistError, InvalidUserCredentialsError, UserNotFoundError
 from domain.values.user import Email, Name, Password
-from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand, IssueRefreshTokenCommand
 from logic.handlers.base import CommandHandler, QueryHandler
-from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
 from logic.uow.base import BaseUnitOfWork
 from infra.settings.settings import settings
 
@@ -16,10 +16,10 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError
 
 @dataclass
-class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand]):
+class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand, RegisterUserResponseSchema]):
     _uow: BaseUnitOfWork
 
-    async def handle(self, command: RegisterUserCommand) -> None:
+    async def handle(self, command: RegisterUserCommand) -> RegisterUserResponseSchema:
         async with self._uow:
             if await self._uow.user_repository.find_by_email(command.email):
                 raise EmailAlreadyExistError(command.email)
@@ -33,11 +33,18 @@ class RegisterUserCommandHandler(CommandHandler[RegisterUserCommand]):
             await self._uow.user_repository.save(new_user)
             await self._uow.commit()
 
+            response_schema = RegisterUserResponseSchema(first_name=new_user.name.first_name,
+                                                         last_name=new_user.name.last_name,
+                                                         email=new_user.email.value,
+                                                         user_id=new_user.user_id,
+                                                         created_at=new_user.creation_time)
+            return response_schema 
+
 @dataclass
-class RefreshTokenQueryHandler(QueryHandler[RefreshTokenQuery, RefreshTokenResponseSchema]):
+class IssueRefreshTokenCommandHandler(CommandHandler[IssueRefreshTokenCommand, IssueRefreshTokenResponseSchema]):
     _uow: BaseUnitOfWork
 
-    async def handle(self, query: RefreshTokenQuery) -> RefreshTokenResponseSchema:
+    async def handle(self, query: IssueRefreshTokenCommand) -> IssueRefreshTokenResponseSchema:
         async with self._uow:
             found_user = await self._uow.user_repository.find_by_email(query.email)
             if not found_user:
@@ -57,7 +64,7 @@ class RefreshTokenQueryHandler(QueryHandler[RefreshTokenQuery, RefreshTokenRespo
             await self._uow.refresh_token_repository.save(refresh_token)
             await self._uow.commit()
             
-            response_schema = RefreshTokenResponseSchema(refresh_token=encoded_refresh_token, access_token=encoded_access_token)
+            response_schema = IssueRefreshTokenResponseSchema(refresh_token=encoded_refresh_token, access_token=encoded_access_token)
             return response_schema
 
 @dataclass
@@ -85,7 +92,7 @@ class GetCurrentUserQueryHandler(QueryHandler[GetCurrentUserQuery, GetCurrentUse
             return response_schema
 
 @dataclass
-class LogoutCommandHandler(CommandHandler[LogoutCommand]):
+class LogoutCommandHandler(CommandHandler[LogoutCommand, None]):
     _uow: BaseUnitOfWork
     async def handle(self, command: LogoutCommand) -> None:
         async with self._uow:

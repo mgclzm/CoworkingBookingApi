@@ -4,29 +4,36 @@ import punq
 
 from functools import lru_cache
 
-from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand
-from logic.handlers.user.handlers import AccessTokenQueryHandler, GetCurrentUserQueryHandler, LogoutCommandHandler, RefreshTokenQueryHandler, RegisterUserCommandHandler
+from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand, IssueRefreshTokenCommand
+from logic.commands.workspace.workspace_commands import RegisterWorkspaceCommand
+from logic.handlers.user.handlers import (AccessTokenQueryHandler, 
+                                          GetCurrentUserQueryHandler, 
+                                          LogoutCommandHandler, 
+                                          IssueRefreshTokenCommandHandler, 
+                                          RegisterUserCommandHandler)
+from logic.handlers.workspace.handlers import RegisterWorkspaceCommandHandler
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.mediator.mediator import CommandMediator, QueryMediator
-from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery, RefreshTokenQuery
+from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
 from logic.uow.base import BaseUnitOfWork
 from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
 COMMAND_AND_HANDLERS_PAIRS = [
-    (RegisterUserCommand, [RegisterUserCommandHandler]),
-    (LogoutCommand, [LogoutCommandHandler])
+    (RegisterUserCommand, RegisterUserCommandHandler),
+    (IssueRefreshTokenCommand, IssueRefreshTokenCommandHandler),
+    (LogoutCommand, LogoutCommandHandler),
+    (RegisterWorkspaceCommand, RegisterWorkspaceCommandHandler)
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
-    (RefreshTokenQuery, RefreshTokenQueryHandler),
     (AccessTokenQuery, AccessTokenQueryHandler),
     (GetCurrentUserQuery, GetCurrentUserQueryHandler),
 ]
 def _init_command_mediator(container: punq.Container) -> CommandMediator:
     command_mediator = CommandMediator()
-    for command_type, handler_types in COMMAND_AND_HANDLERS_PAIRS:
-        handlers = [typed_resolve(container, handler_type) for handler_type in handler_types]
-        command_mediator.register_command(command_type, handlers)
+    for command_type, handler_type in COMMAND_AND_HANDLERS_PAIRS:
+        handler = typed_resolve(container, handler_type)
+        command_mediator.register_command(command_type, handler)
     return command_mediator
 
 def _init_query_mediator(container: punq.Container) -> QueryMediator:
@@ -51,8 +58,9 @@ def _init_container() -> punq.Container:
     
     container.register(RegisterUserCommandHandler)
     container.register(LogoutCommandHandler)
+    container.register(RegisterWorkspaceCommandHandler)
 
-    container.register(RefreshTokenQueryHandler)
+    container.register(IssueRefreshTokenCommandHandler)
     container.register(AccessTokenQueryHandler)
     container.register(GetCurrentUserQueryHandler)
 
