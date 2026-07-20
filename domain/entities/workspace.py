@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from uuid import uuid4
+from api.routes.user.security import AuthException
 from domain.entities.base import BaseEntity, InactiveEntityUsageError, LogicException
-from domain.entities.user import AppUser
 from domain.values.workspace import Number, Title, WorkingTime, WorkspaceDescription, WorkspaceLocation
 
 @dataclass    
@@ -11,6 +11,20 @@ class WorkplaceAlreadyExistError(LogicException):
     @property
     def message(self) -> str:
         return f'Workplace with number {self.workplace.number.value} already exist'
+    
+@dataclass
+class WorkspaceNotFoundError(LogicException):
+    workspace_id: str
+
+    @property
+    def message(self) -> str:
+        return f'Workspace with "{self.workspace_id}" id not found'
+
+@dataclass
+class WorkspaceAccessDeniedError(AuthException):
+    @property
+    def message(self) -> str:
+        return 'Access to workspace is denied'
 
 @dataclass(eq=False)
 class Workplace(BaseEntity): 
@@ -44,4 +58,7 @@ class Workspace(BaseEntity):
             raise WorkplaceAlreadyExistError(workplace)
         self._workplaces.add(workplace)
 
+    def ensure_owned_by(self, user_id: str) -> None:
+        if self.owner_id != user_id:
+            raise WorkspaceAccessDeniedError()
     

@@ -17,3 +17,11 @@ class RegisterWorkspaceResponseSchema(BaseModel):
     location: str
     description: str
     
+class AddWorkplaceRequestSchema(BaseModel):
+    title: str
+    number: int
+
+class AddWorkplaceResponseSchema(BaseModel):
+    workplace_id: str
+    title: str
+    number: int

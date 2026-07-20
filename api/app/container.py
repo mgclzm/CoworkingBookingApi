@@ -5,24 +5,25 @@ import punq
 from functools import lru_cache
 
 from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand, IssueRefreshTokenCommand
-from logic.commands.workspace.workspace_commands import RegisterWorkspaceCommand
+from logic.commands.workspace.workspace_commands import AddWorkplaceCommand, RegisterWorkspaceCommand
 from logic.handlers.user.handlers import (AccessTokenQueryHandler, 
                                           GetCurrentUserQueryHandler, 
                                           LogoutCommandHandler, 
                                           IssueRefreshTokenCommandHandler, 
                                           RegisterUserCommandHandler)
-from logic.handlers.workspace.handlers import RegisterWorkspaceCommandHandler
+from logic.handlers.workspace.handlers import AddWorkplaceCommandHandler, RegisterWorkspaceCommandHandler
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.mediator.mediator import CommandMediator, QueryMediator
 from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
 from logic.uow.base import BaseUnitOfWork
 from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
-COMMAND_AND_HANDLERS_PAIRS = [
+COMMAND_AND_HANDLER_PAIRS = [
     (RegisterUserCommand, RegisterUserCommandHandler),
     (IssueRefreshTokenCommand, IssueRefreshTokenCommandHandler),
     (LogoutCommand, LogoutCommandHandler),
-    (RegisterWorkspaceCommand, RegisterWorkspaceCommandHandler)
+    (RegisterWorkspaceCommand, RegisterWorkspaceCommandHandler),
+    (AddWorkplaceCommand, AddWorkplaceCommandHandler)
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
@@ -31,7 +32,7 @@ QUERY_AND_HANDLER_PAIRS = [
 ]
 def _init_command_mediator(container: punq.Container) -> CommandMediator:
     command_mediator = CommandMediator()
-    for command_type, handler_type in COMMAND_AND_HANDLERS_PAIRS:
+    for command_type, handler_type in COMMAND_AND_HANDLER_PAIRS:
         handler = typed_resolve(container, handler_type)
         command_mediator.register_command(command_type, handler)
     return command_mediator
