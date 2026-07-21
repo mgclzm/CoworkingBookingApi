@@ -1,15 +1,22 @@
 from dataclasses import dataclass
 
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
 from domain.entities.workspace import Workplace, Workspace
 from domain.values.booking import BookingTime
-from domain.values.workspace import Title, WorkingTime, WorkspaceDescription, Number, WorkspaceLocation
+from domain.values.workspace import (
+    Number,
+    Title,
+    WorkingTime,
+    WorkspaceDescription,
+    WorkspaceLocation,
+)
 from infra.repositories.booking.booking_model import BookingModel
 from infra.repositories.workspace.base import BaseWorkspaceRepository
 from infra.repositories.workspace.workspace_model import WorkplaceModel, WorkspaceModel
+
 
 def _convert_workplace_model_to_entity(workplace_model: WorkplaceModel) -> Workplace:
     title = Title(workplace_model.title)
@@ -18,13 +25,16 @@ def _convert_workplace_model_to_entity(workplace_model: WorkplaceModel) -> Workp
     workplace_id = workplace_model.workplace_id
     return Workplace(title, number, is_active, workplace_id=workplace_id)
 
+
 def _convert_workplace_entity_to_model(workplace_entity: Workplace) -> WorkplaceModel:
     workplace_id = workplace_entity.workplace_id
     title = workplace_entity.title.value
     number = workplace_entity.number.value
     is_active = workplace_entity.is_active
-    return WorkplaceModel(workplace_id=workplace_id, title=title, 
-                          number=number, is_active=is_active)
+    return WorkplaceModel(
+        workplace_id=workplace_id, title=title, number=number, is_active=is_active
+    )
+
 
 def _convert_workspace_entity_to_model(workspace_entity: Workspace) -> WorkspaceModel:
     workspace_id = workspace_entity.workspace_id
@@ -35,21 +45,46 @@ def _convert_workspace_entity_to_model(workspace_entity: Workspace) -> Workspace
     description = workspace_entity.description.value
     is_active = workspace_entity.is_active
     owner_id = workspace_entity.owner_id
-    workplaces = [_convert_workplace_entity_to_model(workplace) for workplace in workspace_entity._workplaces]
-    return WorkspaceModel(workspace_id=workspace_id, opening_time=opening_time, closing_time=closing_time,
-                          street=street, city=city,
-                          description=description, is_active=is_active, 
-                          owner_id=owner_id, workplaces=workplaces)
+    workplaces = [
+        _convert_workplace_entity_to_model(workplace)
+        for workplace in workspace_entity._workplaces
+    ]
+    return WorkspaceModel(
+        workspace_id=workspace_id,
+        opening_time=opening_time,
+        closing_time=closing_time,
+        street=street,
+        city=city,
+        description=description,
+        is_active=is_active,
+        owner_id=owner_id,
+        workplaces=workplaces,
+    )
+
 
 def _convert_workspace_model_to_entity(workspace_model: WorkspaceModel) -> Workspace:
     workspace_id = workspace_model.workspace_id
-    workplaces = {_convert_workplace_model_to_entity(workplace) for workplace in workspace_model.workplaces}
-    working_time = WorkingTime(workspace_model.opening_time, workspace_model.closing_time)
+    workplaces = {
+        _convert_workplace_model_to_entity(workplace)
+        for workplace in workspace_model.workplaces
+    }
+    working_time = WorkingTime(
+        workspace_model.opening_time, workspace_model.closing_time
+    )
     location = WorkspaceLocation(workspace_model.street, workspace_model.city)
     description = WorkspaceDescription(workspace_model.description)
     is_active = workspace_model.is_active
     owner_id = workspace_model.owner_id
-    return Workspace(location, working_time, description, owner_id, is_active, workspace_id=workspace_id, _workplaces=workplaces)
+    return Workspace(
+        location,
+        working_time,
+        description,
+        owner_id,
+        is_active,
+        workspace_id=workspace_id,
+        _workplaces=workplaces,
+    )
+
 
 @dataclass
 class SqlAlchemyWorkspaceRepository(BaseWorkspaceRepository):
@@ -66,35 +101,50 @@ class SqlAlchemyWorkspaceRepository(BaseWorkspaceRepository):
     async def merge(self, entity: Workspace) -> None:
         workspace_model = _convert_workspace_entity_to_model(entity)
         await self._session.merge(workspace_model)
-    
-    async def find_all(self, *, limit: int | None=None, offset: int | None=None, city: str | None=None) -> list[Workspace]:
+
+    async def find_all(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+        city: str | None = None,
+        owner_id: str | None = None,
+    ) -> list[Workspace]:
         query = select(WorkspaceModel).options(selectinload(WorkspaceModel.workplaces))
-        if limit is not None and offset is not None:
+        if (limit is not None) and (offset is not None):
             query = query.limit(limit).offset(offset)
         if city is not None:
             query = query.where(WorkspaceModel.city == city)
+        if owner_id is not None:
+            query = query.where(WorkspaceModel.owner_id == owner_id)
         result = await self._session.execute(query)
         result = result.scalars().all()
         return [_convert_workspace_model_to_entity(model) for model in result]
 
-    
     async def find_by_workspace_id(self, workspace_id: str) -> Workspace | None:
-        result = await self._session.execute(select(WorkspaceModel)
-                                             .where(WorkspaceModel.workspace_id == workspace_id)
-                                             .options(selectinload(WorkspaceModel.workplaces)))
+        result = await self._session.execute(
+            select(WorkspaceModel)
+            .where(WorkspaceModel.workspace_id == workspace_id)
+            .options(selectinload(WorkspaceModel.workplaces))
+        )
         result = result.scalar_one_or_none()
         if not result:
             return None
         return _convert_workspace_model_to_entity(result)
-    
-    async def find_all_available_workplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
-        overlap = and_(BookingModel.workspace_id == workspace_id, 
-                       BookingModel.start_time < booking_time.end_time, 
-                       BookingModel.end_time > booking_time.start_time)
+
+    async def find_all_available_workplaces(
+        self, workspace_id: str, booking_time: BookingTime
+    ) -> list[Workplace]:
+        overlap = and_(
+            BookingModel.workspace_id == workspace_id,
+            BookingModel.start_time < booking_time.end_time,
+            BookingModel.end_time > booking_time.start_time,
+        )
         busy_places = select(BookingModel.workplace_id).where(overlap)
-        result = await self._session.execute(select(WorkplaceModel)
-                                             .where(WorkplaceModel.workplace_id == workspace_id)
-                                             .where(WorkplaceModel.workspace_id.not_in(busy_places)))
+        result = await self._session.execute(
+            select(WorkplaceModel)
+            .where(WorkplaceModel.workplace_id == workspace_id)
+            .where(WorkplaceModel.workspace_id.not_in(busy_places))
+        )
         result = result.scalars().all()
         return [_convert_workplace_model_to_entity(workplace) for workplace in result]
-    

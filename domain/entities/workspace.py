@@ -1,18 +1,27 @@
 from dataclasses import dataclass, field
 from typing import Iterator
 from uuid import uuid4
+
 from api.routes.user.security import AuthException
 from domain.entities.base import BaseEntity, InactiveEntityUsageError, LogicException
-from domain.values.workspace import Number, Title, WorkingTime, WorkspaceDescription, WorkspaceLocation
+from domain.values.workspace import (
+    Number,
+    Title,
+    WorkingTime,
+    WorkspaceDescription,
+    WorkspaceLocation,
+)
 
-@dataclass    
+
+@dataclass
 class WorkplaceAlreadyExistError(LogicException):
-    workplace: Workplace
+    workplace: "Workplace"
 
     @property
     def message(self) -> str:
-        return f'Workplace with number {self.workplace.number.value} already exist'
-    
+        return f"Workplace with number {self.workplace.number.value} already exist"
+
+
 @dataclass
 class WorkspaceNotFoundError(LogicException):
     workspace_id: str
@@ -21,33 +30,36 @@ class WorkspaceNotFoundError(LogicException):
     def message(self) -> str:
         return f'Workspace with "{self.workspace_id}" id not found'
 
+
 @dataclass
 class WorkspaceAccessDeniedError(AuthException):
     @property
     def message(self) -> str:
-        return 'Access to workspace is denied'
+        return "Access to workspace is denied"
+
 
 @dataclass(eq=False)
-class Workplace(BaseEntity): 
+class Workplace(BaseEntity):
     workplace_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
     title: Title
     number: Number
     is_active: bool = field(default=True)
 
-    def __eq__(self, other: Workplace) -> bool:
+    def __eq__(self, other: "Workplace") -> bool:
         if not isinstance(other, type(self)):
             return False
         return self.workplace_id == other.workplace_id
-    
+
     def __hash__(self) -> int:
         return hash(self.workplace_id)
+
 
 @dataclass
 class Workspace(BaseEntity):
     workspace_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
     _workplaces: set[Workplace] = field(default_factory=set, kw_only=True)
     location: WorkspaceLocation
-    working_time: WorkingTime 
+    working_time: WorkingTime
     description: WorkspaceDescription
     owner_id: str
     is_active: bool = field(default=True)
@@ -65,4 +77,3 @@ class Workspace(BaseEntity):
     def ensure_owned_by(self, user_id: str) -> None:
         if self.owner_id != user_id:
             raise WorkspaceAccessDeniedError()
-    

@@ -3,6 +3,7 @@ from datetime import datetime
 
 from domain.entities.base import ApplicationException
 
+
 @dataclass
 class InvalidBookingTimeError(ApplicationException):
     start_time: datetime
@@ -10,7 +11,7 @@ class InvalidBookingTimeError(ApplicationException):
 
     @property
     def message(self) -> str:
-        return f'Start time must be before end time, got start time = {self.start_time} end time = {self.end_time}'
+        return f"Start time must be before end time, got start time = {self.start_time} end time = {self.end_time}"
 
 
 @dataclass(frozen=True)
@@ -20,4 +21,6 @@ class BookingTime:
 
     def __post_init__(self):
         if self.start_time >= self.end_time:
-            raise InvalidBookingTimeError(start_time=self.start_time, end_time=self.end_time)
+            raise InvalidBookingTimeError(
+                start_time=self.start_time, end_time=self.end_time
+            )

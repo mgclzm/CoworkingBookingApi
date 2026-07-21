@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from email_validator import validate_email, EmailNotValidError
+
+from email_validator import EmailNotValidError, validate_email
 
 from domain.entities.base import ApplicationException
+
 
 @dataclass
 class InvalidNameError(ApplicationException):
@@ -10,7 +12,8 @@ class InvalidNameError(ApplicationException):
 
     @property
     def message(self) -> str:
-        return f'First name and last name cannot be empty or bigger then 50 characters, got first name = {self.first_name} last name = {self.last_name}'
+        return f"First name and last name cannot be empty or bigger then 50 characters, got first name = {self.first_name} last name = {self.last_name}"
+
 
 @dataclass
 class InvalidPasswordError(ApplicationException):
@@ -18,7 +21,7 @@ class InvalidPasswordError(ApplicationException):
 
     @property
     def message(self) -> str:
-        return f'Password length cannot be bigger then 255 characters, got {len(self.password_value)}'
+        return f"Password length cannot be bigger then 255 characters, got {len(self.password_value)}"
 
 
 @dataclass(frozen=True)
@@ -32,6 +35,7 @@ class Name:
         if len(self.first_name) > 50 or len(self.last_name) > 50:
             raise InvalidNameError(first_name=self.first_name, last_name=self.last_name)
 
+
 @dataclass(frozen=True)
 class Email:
     value: str
@@ -39,7 +43,8 @@ class Email:
     def __post_init__(self):
         validate_email(self.value)
         if len(self.value) > 60:
-            raise EmailNotValidError('Email cannot be bigger then 60 characters')
+            raise EmailNotValidError("Email cannot be bigger then 60 characters")
+
 
 @dataclass(frozen=True)
 class Password:
@@ -48,4 +53,3 @@ class Password:
     def __post_init__(self):
         if len(self.value) > 255:
             raise InvalidPasswordError(self.value)
-        

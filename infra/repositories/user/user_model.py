@@ -1,12 +1,13 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, DateTime, Boolean 
 from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from infra.db.base import Base
 
 
 class AppUserModel(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     user_id: Mapped[str] = mapped_column(primary_key=True)
     firstname: Mapped[str] = mapped_column(String(50))

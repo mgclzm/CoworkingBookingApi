@@ -4,15 +4,22 @@ from domain.entities.workspace import Workplace, Workspace
 from domain.values.booking import BookingTime
 from infra.repositories.base_repository import BaseRepository
 
+
 class BaseWorkspaceRepository(BaseRepository[Workspace]):
     @abstractmethod
-    async def find_all(self, *, limit: int | None=None, offset: int | None=None, city: str | None=None) -> list[Workspace]:
-        ...
-    
+    async def find_all(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+        city: str | None = None,
+        owner_id: str | None = None,
+    ) -> list[Workspace]: ...
+
     @abstractmethod
-    async def find_by_workspace_id(self, workspace_id: str) -> Workspace | None:
-        ...
-    
+    async def find_by_workspace_id(self, workspace_id: str) -> Workspace | None: ...
+
     @abstractmethod
-    async def find_all_available_workplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
-        ...
+    async def find_all_available_workplaces(
+        self, workspace_id: str, booking_time: BookingTime
+    ) -> list[Workplace]: ...

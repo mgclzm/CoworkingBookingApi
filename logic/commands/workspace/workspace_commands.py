@@ -1,8 +1,12 @@
 from dataclasses import dataclass
 from datetime import time
 
-from api.routes.workspace.schemas import AddWorkplaceResponseSchema, RegisterWorkspaceResponseSchema
+from api.routes.workspace.schemas import (
+    AddWorkplaceResponseSchema,
+    RegisterWorkspaceResponseSchema,
+)
 from logic.commands.base import BaseCommand
+
 
 @dataclass(frozen=True)
 class RegisterWorkspaceCommand(BaseCommand[RegisterWorkspaceResponseSchema]):
@@ -12,6 +16,7 @@ class RegisterWorkspaceCommand(BaseCommand[RegisterWorkspaceResponseSchema]):
     city: str
     street: str
     description: str
+
 
 @dataclass(frozen=True)
 class AddWorkplaceCommand(BaseCommand[AddWorkplaceResponseSchema]):

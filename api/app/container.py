@@ -1,20 +1,37 @@
+from functools import lru_cache
 from typing import TypeVar, cast
 
 import punq
 
-from functools import lru_cache
-
-from logic.commands.user.user_commands import LogoutCommand, RegisterUserCommand, IssueRefreshTokenCommand
-from logic.commands.workspace.workspace_commands import AddWorkplaceCommand, RegisterWorkspaceCommand
-from logic.handlers.user.handlers import (AccessTokenQueryHandler, 
-                                          GetCurrentUserQueryHandler, 
-                                          LogoutCommandHandler, 
-                                          IssueRefreshTokenCommandHandler, 
-                                          RegisterUserCommandHandler)
-from logic.handlers.workspace.handlers import AddWorkplaceCommandHandler, RegisterWorkspaceCommandHandler
+from logic.commands.user.user_commands import (
+    IssueRefreshTokenCommand,
+    LogoutCommand,
+    RegisterUserCommand,
+)
+from logic.commands.workspace.workspace_commands import (
+    AddWorkplaceCommand,
+    RegisterWorkspaceCommand,
+)
+from logic.handlers.user.handlers import (
+    AccessTokenQueryHandler,
+    GetCurrentUserQueryHandler,
+    IssueRefreshTokenCommandHandler,
+    LogoutCommandHandler,
+    RegisterUserCommandHandler,
+)
+from logic.handlers.workspace.handlers import (
+    AddWorkplaceCommandHandler,
+    GetAllWorkspacesQueryHandler,
+    GetMyWorkspacesQueryHandler,
+    RegisterWorkspaceCommandHandler,
+)
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.mediator.mediator import CommandMediator, QueryMediator
 from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
+from logic.queries.workspace.workspace_queries import (
+    GetAllWorkspacesQuery,
+    GetMyWorkspacesQuery,
+)
 from logic.uow.base import BaseUnitOfWork
 from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
@@ -23,19 +40,24 @@ COMMAND_AND_HANDLER_PAIRS = [
     (IssueRefreshTokenCommand, IssueRefreshTokenCommandHandler),
     (LogoutCommand, LogoutCommandHandler),
     (RegisterWorkspaceCommand, RegisterWorkspaceCommandHandler),
-    (AddWorkplaceCommand, AddWorkplaceCommandHandler)
+    (AddWorkplaceCommand, AddWorkplaceCommandHandler),
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
     (AccessTokenQuery, AccessTokenQueryHandler),
     (GetCurrentUserQuery, GetCurrentUserQueryHandler),
+    (GetAllWorkspacesQuery, GetAllWorkspacesQueryHandler),
+    (GetMyWorkspacesQuery, GetMyWorkspacesQueryHandler),
 ]
+
+
 def _init_command_mediator(container: punq.Container) -> CommandMediator:
     command_mediator = CommandMediator()
     for command_type, handler_type in COMMAND_AND_HANDLER_PAIRS:
         handler = typed_resolve(container, handler_type)
         command_mediator.register_command(command_type, handler)
     return command_mediator
+
 
 def _init_query_mediator(container: punq.Container) -> QueryMediator:
     query_mediator = QueryMediator()
@@ -44,27 +66,43 @@ def _init_query_mediator(container: punq.Container) -> QueryMediator:
         query_mediator.register_query(query_type, handler)
     return query_mediator
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
+
 def typed_resolve(container: punq.Container, service_type: type[T]) -> T:
     return cast(T, container.resolve(service_type))
+
 
 @lru_cache(maxsize=None)
 def init_container() -> punq.Container:
     return _init_container()
 
+
 def _init_container() -> punq.Container:
     container = punq.Container()
 
     container.register(BaseUnitOfWork, SqlAlchemyUnitOfWork, scope=punq.Scope.singleton)
-    
+
     container.register(RegisterUserCommandHandler)
+    container.register(IssueRefreshTokenCommandHandler)
     container.register(LogoutCommandHandler)
     container.register(RegisterWorkspaceCommandHandler)
+    container.register(AddWorkplaceCommandHandler)
 
-    container.register(IssueRefreshTokenCommandHandler)
     container.register(AccessTokenQueryHandler)
     container.register(GetCurrentUserQueryHandler)
+    container.register(GetAllWorkspacesQueryHandler)
+    container.register(GetMyWorkspacesQueryHandler)
 
-    container.register(ICommandMediator, factory=lambda: _init_command_mediator(container), scope=punq.Scope.singleton)
-    container.register(IQueryMediator, factory=lambda: _init_query_mediator(container), scope=punq.Scope.singleton)
+    container.register(
+        ICommandMediator,
+        factory=lambda: _init_command_mediator(container),
+        scope=punq.Scope.singleton,
+    )
+    container.register(
+        IQueryMediator,
+        factory=lambda: _init_query_mediator(container),
+        scope=punq.Scope.singleton,
+    )
     return container
