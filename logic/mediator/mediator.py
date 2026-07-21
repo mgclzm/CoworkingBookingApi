@@ -33,7 +33,7 @@ class CommandMediator(ICommandMediator):
         
     async def execute_command(self, command: BaseCommand[CommandResultT]) -> CommandResultT:
         command_type = type(command)
-        handler = self._command_register[command_type]
+        handler = self._command_register.get(command_type)
         if not handler:
             raise CommandHandlerNotFoundError(command_type)
         return await handler.handle(command)

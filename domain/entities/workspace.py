@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Iterator
 from uuid import uuid4
 from api.routes.user.security import AuthException
 from domain.entities.base import BaseEntity, InactiveEntityUsageError, LogicException
@@ -50,6 +51,9 @@ class Workspace(BaseEntity):
     description: WorkspaceDescription
     owner_id: str
     is_active: bool = field(default=True)
+
+    def __iter__(self) -> Iterator[Workplace]:
+        return iter(self._workplaces)
 
     def register_workplace(self, workplace: Workplace) -> None:
         if not workplace.is_active:

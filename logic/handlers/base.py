@@ -15,5 +15,5 @@ QueryT = TypeVar('QueryT', bound=BaseQuery)
 
 class QueryHandler(ABC, Generic[QueryT, QueryResultT]):
     @abstractmethod
-    async def handle(self, query: BaseQuery[QueryResultT]) -> QueryResultT:
+    async def handle(self, query: QueryT) -> QueryResultT:
         ... 

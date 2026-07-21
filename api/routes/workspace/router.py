@@ -1,14 +1,14 @@
 from typing import Annotated
-from urllib import response
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from api.app.dependencies import get_command_mediator, require_access_token
+from api.app.dependencies import get_command_mediator, get_query_mediator, require_access_token
 from api.routes.user.security import AuthException
-from api.routes.workspace.schemas import AddWorkplaceRequestSchema, AddWorkplaceResponseSchema, RegisterWorkspaceRequestSchema
+from api.routes.workspace.schemas import AddWorkplaceRequestSchema, AddWorkplaceResponseSchema, GetAllWorkplacesParams, GetAllWorkspacesResponseSchema, RegisterWorkspaceRequestSchema
 from domain.entities.base import LogicException
 from logic.commands.workspace.workspace_commands import AddWorkplaceCommand, RegisterWorkspaceCommand
-from logic.mediator.base import ICommandMediator
+from logic.mediator.base import ICommandMediator, IQueryMediator
+from logic.queries.workspace.workspace_queries import GetAllWorkspacesQuery
 
 workspace_router = APIRouter(prefix='/v1', tags=['Workspace'])
 
@@ -25,7 +25,8 @@ async def register_workspace(register_workspace_schema: RegisterWorkspaceRequest
     register_workspace_command = RegisterWorkspaceCommand(owner_id,
                                                           register_workspace_schema.opening_time,
                                                           register_workspace_schema.closing_time,
-                                                          register_workspace_schema.location,
+                                                          register_workspace_schema.city,
+                                                          register_workspace_schema.street,
                                                           register_workspace_schema.description)
     response_schema = await command_mediator.execute_command(register_workspace_command)
     return response_schema
@@ -37,7 +38,7 @@ async def register_workspace(register_workspace_schema: RegisterWorkspaceRequest
                                                      'model': AddWorkplaceResponseSchema},
                            status.HTTP_401_UNAUTHORIZED: {'description': 'User in not authenticated'},
                            status.HTTP_403_FORBIDDEN: {'description': 'Authenticated user is not the owner of this workspace'},
-                           status.HTTP_404_NOT_FOUND: {'description': ''}
+                           status.HTTP_404_NOT_FOUND: {'description': 'Workspace not found'}
                        },
                        summary='Endpoint to add workplace to an existing workspace, require access token')
 async def add_workplace(workspace_id: str,
@@ -47,9 +48,22 @@ async def add_workplace(workspace_id: str,
     add_workplace_command = AddWorkplaceCommand(user_id, workspace_id, request_schema.title, request_schema.number)
     try:
         response_schema = await command_mediator.execute_command(add_workplace_command)
-    except LogicException as ex:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
     except AuthException as ex:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
+    except LogicException as ex:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
     else:
         return response_schema
+
+@workspace_router.get('/workspace',
+                      status_code=status.HTTP_200_OK,
+                      response_model=list[GetAllWorkspacesResponseSchema],
+                      responses={
+                          status.HTTP_200_OK: {'description': 'Return information about workspaces'},
+                      },
+                      summary='Endpoint to obtain information about workspaces')
+async def get_all_workplaces(query_mediator: Annotated[IQueryMediator, Depends(get_query_mediator)], 
+                             query_params: Annotated[GetAllWorkplacesParams, Query()]):
+    get_all_workspaces_query = GetAllWorkspacesQuery(query_params.page_number, query_params.page_size, query_params.city)
+    response_schemas = await query_mediator.execute_query(get_all_workspaces_query)
+    return response_schemas

@@ -6,7 +6,7 @@ from infra.repositories.base_repository import BaseRepository
 
 class BaseWorkspaceRepository(BaseRepository[Workspace]):
     @abstractmethod
-    async def find_all(self) -> list[Workspace]:
+    async def find_all(self, *, limit: int | None=None, offset: int | None=None, city: str | None=None) -> list[Workspace]:
         ...
     
     @abstractmethod
@@ -14,5 +14,5 @@ class BaseWorkspaceRepository(BaseRepository[Workspace]):
         ...
     
     @abstractmethod
-    async def find_all_available_wokrplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
+    async def find_all_available_workplaces(self, workspace_id: str, booking_time: BookingTime) -> list[Workplace]:
         ...

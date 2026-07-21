@@ -38,11 +38,11 @@ class InvalidDescriptionError(ApplicationException):
     
 @dataclass
 class InvalidLocationError(ApplicationException):
-    location_value: str
+    location: WorkspaceLocation
 
     @property
     def message(self) -> str:
-        return f'Workspace location cannot be empty and must be less then 200 characters, got {len(self.location_value)}'
+        return f'Invalid length of workspace location, street must be less then 200 characters and not empty, got ({len(self.location.street)}), city must be less then 50 characters and not empty, got ({len(self.location.city)})'
 
 @dataclass(frozen=True)
 class Title:
@@ -79,8 +79,11 @@ class WorkspaceDescription:
 
 @dataclass(frozen=True)
 class WorkspaceLocation:
-    value: str
+    city: str
+    street: str
 
     def __post_init__(self):
-        if len(self.value) > 200 or self.value.isspace():
-            raise InvalidLocationError(self.value)
+        if len(self.street) > 200 or self.street.isspace():
+            raise InvalidLocationError(self)
+        if len(self.city) > 50 or self.city.isspace():
+            raise InvalidLocationError(self)

@@ -9,7 +9,8 @@ class RegisterWorkspaceCommand(BaseCommand[RegisterWorkspaceResponseSchema]):
     owner_id: str
     opening_time: time
     closing_time: time
-    location: str
+    city: str
+    street: str
     description: str
 
 @dataclass(frozen=True)
