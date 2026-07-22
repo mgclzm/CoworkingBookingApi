@@ -15,6 +15,7 @@ from domain.values.workspace import (
 )
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
+    PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
 )
 from logic.handlers.base import CommandHandler, QueryHandler
@@ -122,3 +123,27 @@ class GetMyWorkspacesQueryHandler(
                 WorkspaceSchema.from_entity(workspace) for workspace in workspaces
             ]
             return response_schemas
+
+
+@dataclass
+class PatchWorkspaceCommandHandler(CommandHandler[PatchWorkspaceCommand, None]):
+    _uow: BaseUnitOfWork
+
+    async def handle(self, command: PatchWorkspaceCommand) -> None:
+        async with self._uow:
+            workspace = await self._uow.workspace_repository.find_by_workspace_id(
+                command.workspace_id
+            )
+            if workspace is None:
+                raise WorkspaceNotFoundError(command.workspace_id)
+
+            workspace.ensure_owned_by(command.user_id)
+
+            workspace.update_location(city=command.city, street=command.street)
+            workspace.update_working_time(
+                opening_time=command.opening_time, closing_time=command.closing_time
+            )
+            workspace.update_description(command.description)
+
+            await self._uow.workspace_repository.merge(workspace)
+            await self._uow.commit()

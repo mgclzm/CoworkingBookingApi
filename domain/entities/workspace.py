@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import time
 from typing import Iterator
 from uuid import uuid4
 
@@ -77,3 +78,40 @@ class Workspace(BaseEntity):
     def ensure_owned_by(self, user_id: str) -> None:
         if self.owner_id != user_id:
             raise WorkspaceAccessDeniedError()
+
+    def update_location(
+        self, *, city: str | None = None, street: str | None = None
+    ) -> None:
+        if (city is None) and (street is None):
+            return
+
+        new_location = WorkspaceLocation(
+            city=city if city is not None else self.location.city,
+            street=street if street is not None else self.location.street,
+        )
+
+        self.location = new_location
+
+    def update_working_time(
+        self, *, opening_time: time | None = None, closing_time: time | None = None
+    ) -> None:
+        if (opening_time is None) and (closing_time is None):
+            return
+
+        new_working_time = WorkingTime(
+            opening_time=opening_time
+            if opening_time is not None
+            else self.working_time.opening_time,
+            closing_time=closing_time
+            if closing_time is not None
+            else self.working_time.closing_time,
+        )
+
+        self.working_time = new_working_time
+
+    def update_description(self, description: str | None = None) -> None:
+        if description is None:
+            return
+
+        new_description = WorkspaceDescription(description)
+        self.description = new_description

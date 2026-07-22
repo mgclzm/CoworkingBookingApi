@@ -73,3 +73,11 @@ class WorkspaceSchema(BaseModel):
             is_active=entity.is_active,
             workplaces=workplaces,
         )
+
+
+class PatchWorkspaceSchema(BaseModel):
+    city: str | None = Field(default=None, max_length=50)
+    street: str | None = Field(default=None, max_length=200)
+    opening_time: time | None = Field(default=None)
+    closing_time: time | None = Field(default=None)
+    description: str | None = Field(default=None, max_length=1000)

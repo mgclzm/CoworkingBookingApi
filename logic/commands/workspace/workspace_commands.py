@@ -24,3 +24,14 @@ class AddWorkplaceCommand(BaseCommand[AddWorkplaceResponseSchema]):
     workspace_id: str
     title: str
     number: int
+
+
+@dataclass(frozen=True)
+class PatchWorkspaceCommand(BaseCommand[None]):
+    workspace_id: str
+    user_id: str
+    city: str | None
+    street: str | None
+    opening_time: time | None
+    closing_time: time | None
+    description: str | None

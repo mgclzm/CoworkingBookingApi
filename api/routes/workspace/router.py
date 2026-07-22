@@ -12,12 +12,14 @@ from api.routes.workspace.schemas import (
     AddWorkplaceRequestSchema,
     AddWorkplaceResponseSchema,
     GetWorkplacesParams,
+    PatchWorkspaceSchema,
     RegisterWorkspaceRequestSchema,
     WorkspaceSchema,
 )
 from domain.entities.base import LogicException
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
+    PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
 )
 from logic.mediator.base import ICommandMediator, IQueryMediator
@@ -133,3 +135,38 @@ async def get_my_workspaces(
     )
     response_schemas = await query_mediator.execute_query(get_my_workspaces_query)
     return response_schemas
+
+
+@workspace_router.patch(
+    "/workspace/{workspace_id}",
+    responses={
+        status.HTTP_200_OK: {"description": "Workspace parameter successfully changed"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "User is not authenticated"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Authenticated user is not the owner of this workspace"
+        },
+        status.HTTP_404_NOT_FOUND: {"description": "Workspace not found"},
+    },
+    summary="Endpoint to change some parameters in workspace",
+)
+async def patch_workspace(
+    workspace_id: str,
+    patch_workspace_schema: PatchWorkspaceSchema,
+    user_id: Annotated[str, Depends(require_access_token)],
+    command_mediator: Annotated[ICommandMediator, Depends(get_command_mediator)],
+):
+    patch_workspace_command = PatchWorkspaceCommand(
+        workspace_id,
+        user_id,
+        patch_workspace_schema.city,
+        patch_workspace_schema.street,
+        patch_workspace_schema.opening_time,
+        patch_workspace_schema.closing_time,
+        patch_workspace_schema.description,
+    )
+    try:
+        await command_mediator.execute_command(patch_workspace_command)
+    except AuthException as ex:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
+    except LogicException as ex:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
