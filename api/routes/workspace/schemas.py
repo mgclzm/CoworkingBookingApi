@@ -81,3 +81,8 @@ class PatchWorkspaceSchema(BaseModel):
     opening_time: time | None = Field(default=None)
     closing_time: time | None = Field(default=None)
     description: str | None = Field(default=None, max_length=1000)
+
+
+class PatchWorkplaceSchema(BaseModel):
+    number: int | None = Field(default=None, gt=0, le=100)
+    title: str | None = Field(default=None, max_length=50)

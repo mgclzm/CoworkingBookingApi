@@ -39,6 +39,24 @@ class WorkspaceAccessDeniedError(AuthException):
         return "Access to workspace is denied"
 
 
+@dataclass
+class WorkplaceNotFoundError(LogicException):
+    number: int
+
+    @property
+    def message(self) -> str:
+        return f"Workplace with number '{self.number}' not found"
+
+
+@dataclass
+class WorkplaceNumberAlreadyTakenError(LogicException):
+    number: int
+
+    @property
+    def message(self) -> str:
+        return f"Workplace number '{self.number}' already taken"
+
+
 @dataclass(eq=False)
 class Workplace(BaseEntity):
     workplace_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
@@ -115,3 +133,39 @@ class Workspace(BaseEntity):
 
         new_description = WorkspaceDescription(description)
         self.description = new_description
+
+    def is_workplace_exist(self, number: Number) -> bool:
+        return any(
+            workplace.number.value == number.value for workplace in self._workplaces
+        )
+
+    def get_workplace(self, number: Number) -> Workplace | None:
+        return next(
+            (
+                workplace
+                for workplace in self._workplaces
+                if workplace.number.value == number.value
+            ),
+            None,
+        )
+
+    def update_workplace(
+        self,
+        current_number: Number,
+        *,
+        new_number: int | None = None,
+        new_title: str | None = None,
+    ) -> None:
+        workplace = self.get_workplace(current_number)
+        if workplace is None:
+            raise WorkplaceNotFoundError(current_number.value)
+
+        if new_number is not None:
+            new_workplace_number = Number(new_number)
+            if self.is_workplace_exist(new_workplace_number):
+                raise WorkplaceNumberAlreadyTakenError(new_number)
+            workplace.number = new_workplace_number
+
+        if new_title is not None:
+            new_workplace_title = Title(new_title)
+            workplace.title = new_workplace_title

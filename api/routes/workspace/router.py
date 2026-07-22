@@ -12,13 +12,16 @@ from api.routes.workspace.schemas import (
     AddWorkplaceRequestSchema,
     AddWorkplaceResponseSchema,
     GetWorkplacesParams,
+    PatchWorkplaceSchema,
     PatchWorkspaceSchema,
     RegisterWorkspaceRequestSchema,
     WorkspaceSchema,
 )
 from domain.entities.base import LogicException
+from domain.entities.workspace import WorkplaceNotFoundError
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
+    PatchWorkplaceCommand,
     PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
 )
@@ -170,3 +173,43 @@ async def patch_workspace(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
     except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
+
+
+@workspace_router.patch(
+    "/workspace/{workspace_id}/workplaces/{workplace_number}",
+    responses={
+        status.HTTP_200_OK: {"description": "Workplace parameter successfully changed"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "User is not authenticated"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Authenticated user is not the owner of this workspace"
+        },
+        status.HTTP_404_NOT_FOUND: {"description": "Workspace not found"},
+        status.HTTP_409_CONFLICT: {"description": "New workplace number already taken"},
+    },
+    summary="Endpoint to change some parameters in workplace",
+)
+async def patch_workplace(
+    workspace_id: str,
+    workplace_number: int,
+    patch_workplace_schema: PatchWorkplaceSchema,
+    user_id: Annotated[str, Depends(require_access_token)],
+    command_mediator: Annotated[ICommandMediator, Depends(get_command_mediator)],
+):
+    patch_workplace_command = PatchWorkplaceCommand(
+        workspace_id,
+        user_id,
+        workplace_number,
+        patch_workplace_schema.number,
+        patch_workplace_schema.title,
+    )
+    try:
+        await command_mediator.execute_command(patch_workplace_command)
+    except AuthException as ex:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
+    except LogicException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(ex, WorkplaceNotFoundError)
+            else status.HTTP_409_CONFLICT,
+            detail=ex.message,
+        )

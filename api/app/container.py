@@ -10,6 +10,7 @@ from logic.commands.user.user_commands import (
 )
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
+    PatchWorkplaceCommand,
     PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
 )
@@ -24,6 +25,7 @@ from logic.handlers.workspace.handlers import (
     AddWorkplaceCommandHandler,
     GetAllWorkspacesQueryHandler,
     GetMyWorkspacesQueryHandler,
+    PatchWorkplaceCommandHandler,
     PatchWorkspaceCommandHandler,
     RegisterWorkspaceCommandHandler,
 )
@@ -44,6 +46,7 @@ COMMAND_AND_HANDLER_PAIRS = [
     (RegisterWorkspaceCommand, RegisterWorkspaceCommandHandler),
     (AddWorkplaceCommand, AddWorkplaceCommandHandler),
     (PatchWorkspaceCommand, PatchWorkspaceCommandHandler),
+    (PatchWorkplaceCommand, PatchWorkplaceCommandHandler),
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
@@ -93,6 +96,7 @@ def _init_container() -> punq.Container:
     container.register(RegisterWorkspaceCommandHandler)
     container.register(AddWorkplaceCommandHandler)
     container.register(PatchWorkspaceCommandHandler)
+    container.register(PatchWorkplaceCommandHandler)
 
     container.register(AccessTokenQueryHandler)
     container.register(GetCurrentUserQueryHandler)

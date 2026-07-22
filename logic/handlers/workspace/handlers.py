@@ -15,6 +15,7 @@ from domain.values.workspace import (
 )
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
+    PatchWorkplaceCommand,
     PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
 )
@@ -144,6 +145,31 @@ class PatchWorkspaceCommandHandler(CommandHandler[PatchWorkspaceCommand, None]):
                 opening_time=command.opening_time, closing_time=command.closing_time
             )
             workspace.update_description(command.description)
+
+            await self._uow.workspace_repository.merge(workspace)
+            await self._uow.commit()
+
+
+@dataclass
+class PatchWorkplaceCommandHandler(CommandHandler[PatchWorkplaceCommand, None]):
+    _uow: BaseUnitOfWork
+
+    async def handle(self, command: PatchWorkplaceCommand) -> None:
+        async with self._uow:
+            workspace = await self._uow.workspace_repository.find_by_workspace_id(
+                command.workspace_id
+            )
+            if workspace is None:
+                raise WorkspaceNotFoundError(command.workspace_id)
+
+            workspace.ensure_owned_by(command.user_id)
+
+            current_number = Number(command.current_number)
+            workspace.update_workplace(
+                current_number,
+                new_number=command.new_number,
+                new_title=command.new_title,
+            )
 
             await self._uow.workspace_repository.merge(workspace)
             await self._uow.commit()

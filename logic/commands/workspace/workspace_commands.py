@@ -35,3 +35,12 @@ class PatchWorkspaceCommand(BaseCommand[None]):
     opening_time: time | None
     closing_time: time | None
     description: str | None
+
+
+@dataclass(frozen=True)
+class PatchWorkplaceCommand(BaseCommand[None]):
+    workspace_id: str
+    user_id: str
+    current_number: int
+    new_number: int | None
+    new_title: str | None
