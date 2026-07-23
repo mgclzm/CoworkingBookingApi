@@ -25,6 +25,7 @@ from domain.entities.user import (
 )
 from domain.values.user import Email, Name, Password
 from infra.settings.settings import settings
+from infra.uow.base import BaseUnitOfWork
 from logic.commands.user.user_commands import (
     IssueRefreshTokenCommand,
     LogoutCommand,
@@ -32,7 +33,6 @@ from logic.commands.user.user_commands import (
 )
 from logic.handlers.base import CommandHandler, QueryHandler
 from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
-from logic.uow.base import BaseUnitOfWork
 
 
 @dataclass

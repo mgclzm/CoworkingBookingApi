@@ -3,8 +3,12 @@ from datetime import time
 from typing import Iterator
 from uuid import uuid4
 
-from api.routes.user.security import AuthException
-from domain.entities.base import BaseEntity, InactiveEntityUsageError, LogicException
+from domain.entities.base import (
+    ApplicationException,
+    BaseEntity,
+    InactiveEntityUsageError,
+    LogicException,
+)
 from domain.values.workspace import (
     Number,
     Title,
@@ -33,7 +37,7 @@ class WorkspaceNotFoundError(LogicException):
 
 
 @dataclass
-class WorkspaceAccessDeniedError(AuthException):
+class WorkspaceAccessDeniedError(ApplicationException):
     @property
     def message(self) -> str:
         return "Access to workspace is denied"

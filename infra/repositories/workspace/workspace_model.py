@@ -31,5 +31,5 @@ class WorkspaceModel(Base):
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"))
 
     workplaces: Mapped[list["WorkplaceModel"]] = relationship(
-        back_populates="workspace", cascade="save-update, merge, delete-orphan"
+        back_populates="workspace", cascade="save-update, merge, delete, delete-orphan"
     )

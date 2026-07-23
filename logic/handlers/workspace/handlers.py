@@ -13,6 +13,7 @@ from domain.values.workspace import (
     WorkspaceDescription,
     WorkspaceLocation,
 )
+from infra.uow.base import BaseUnitOfWork
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
     PatchWorkplaceCommand,
@@ -24,7 +25,6 @@ from logic.queries.workspace.workspace_queries import (
     GetAllWorkspacesQuery,
     GetMyWorkspacesQuery,
 )
-from logic.uow.base import BaseUnitOfWork
 
 
 @dataclass

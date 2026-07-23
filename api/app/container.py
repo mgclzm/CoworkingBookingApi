@@ -3,6 +3,8 @@ from typing import TypeVar, cast
 
 import punq
 
+from infra.uow.base import BaseUnitOfWork
+from infra.uow.unit_of_work import SqlAlchemyUnitOfWork
 from logic.commands.user.user_commands import (
     IssueRefreshTokenCommand,
     LogoutCommand,
@@ -36,8 +38,6 @@ from logic.queries.workspace.workspace_queries import (
     GetAllWorkspacesQuery,
     GetMyWorkspacesQuery,
 )
-from logic.uow.base import BaseUnitOfWork
-from logic.uow.unit_of_work import SqlAlchemyUnitOfWork
 
 COMMAND_AND_HANDLER_PAIRS = [
     (RegisterUserCommand, RegisterUserCommandHandler),

@@ -16,8 +16,8 @@ from api.routes.user.security import (
     TokenType,
 )
 from infra.settings.settings import settings
+from infra.uow.base import BaseUnitOfWork
 from logic.mediator.base import ICommandMediator, IQueryMediator
-from logic.uow.base import BaseUnitOfWork
 
 
 def get_command_mediator() -> ICommandMediator:

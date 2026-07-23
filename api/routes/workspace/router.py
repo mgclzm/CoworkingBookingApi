@@ -7,7 +7,6 @@ from api.app.dependencies import (
     get_query_mediator,
     require_access_token,
 )
-from api.routes.user.security import AuthException
 from api.routes.workspace.schemas import (
     AddWorkplaceRequestSchema,
     AddWorkplaceResponseSchema,
@@ -17,7 +16,7 @@ from api.routes.workspace.schemas import (
     RegisterWorkspaceRequestSchema,
     WorkspaceSchema,
 )
-from domain.entities.base import LogicException
+from domain.entities.base import ApplicationException, LogicException
 from domain.entities.workspace import WorkplaceNotFoundError
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
@@ -89,7 +88,7 @@ async def add_workplace(
     )
     try:
         response_schema = await command_mediator.execute_command(add_workplace_command)
-    except AuthException as ex:
+    except ApplicationException as ex:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
     except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
@@ -169,7 +168,7 @@ async def patch_workspace(
     )
     try:
         await command_mediator.execute_command(patch_workspace_command)
-    except AuthException as ex:
+    except ApplicationException as ex:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
     except LogicException as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.message)
@@ -204,7 +203,7 @@ async def patch_workplace(
     )
     try:
         await command_mediator.execute_command(patch_workplace_command)
-    except AuthException as ex:
+    except ApplicationException as ex:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ex.message)
     except LogicException as ex:
         raise HTTPException(

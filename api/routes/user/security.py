@@ -8,7 +8,7 @@ import jwt
 
 from domain.entities.refresh_token import RefreshToken
 from infra.settings.settings import settings
-from logic.uow.base import BaseUnitOfWork
+from infra.uow.base import BaseUnitOfWork
 
 
 class TokenType(StrEnum):

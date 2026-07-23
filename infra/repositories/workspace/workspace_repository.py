@@ -71,7 +71,9 @@ def _convert_workspace_model_to_entity(workspace_model: WorkspaceModel) -> Works
     working_time = WorkingTime(
         workspace_model.opening_time, workspace_model.closing_time
     )
-    location = WorkspaceLocation(workspace_model.street, workspace_model.city)
+    location = WorkspaceLocation(
+        city=workspace_model.city, street=workspace_model.street
+    )
     description = WorkspaceDescription(workspace_model.description)
     is_active = workspace_model.is_active
     owner_id = workspace_model.owner_id

@@ -12,7 +12,7 @@ from infra.repositories.workspace.workspace_repository import (
     SqlAlchemyWorkspaceRepository,
 )
 from infra.settings.settings import settings
-from logic.uow.base import BaseUnitOfWork
+from infra.uow.base import BaseUnitOfWork
 
 DEFAULT_SESSION_FACTORY = async_sessionmaker(
     bind=create_async_engine(settings.postgres_db_url),
