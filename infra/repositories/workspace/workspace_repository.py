@@ -139,6 +139,7 @@ class SqlAlchemyWorkspaceRepository(BaseWorkspaceRepository):
     ) -> list[Workplace]:
         overlap = and_(
             BookingModel.workspace_id == workspace_id,
+            BookingModel.day == booking_time.day,
             BookingModel.start_time < booking_time.end_time,
             BookingModel.end_time > booking_time.start_time,
         )

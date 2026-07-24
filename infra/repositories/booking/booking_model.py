@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, time
 
-from sqlalchemy import DateTime, Enum, ForeignKey
+from sqlalchemy import Date, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from domain.entities.booking import BookingStatus
@@ -14,6 +14,7 @@ class BookingModel(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id"))
     workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.workspace_id"))
     workplace_id: Mapped[str] = mapped_column(ForeignKey("workplaces.workplace_id"))
-    start_time: Mapped[datetime] = mapped_column(DateTime)
-    end_time: Mapped[datetime] = mapped_column(DateTime)
+    start_time: Mapped[time] = mapped_column(DateTime(timezone=True))
+    end_time: Mapped[time] = mapped_column(DateTime(timezone=True))
+    day: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(Enum(BookingStatus))
