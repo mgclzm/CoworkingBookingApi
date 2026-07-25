@@ -6,6 +6,7 @@ import punq
 from infra.uow.base import BaseUnitOfWork
 from infra.uow.unit_of_work import SqlAlchemyUnitOfWork
 from logic.commands.booking.booking_commands import (
+    CancelBookingCommand,
     ConfirmBookingCommand,
     CreateBookingCommand,
 )
@@ -21,6 +22,7 @@ from logic.commands.workspace.workspace_commands import (
     RegisterWorkspaceCommand,
 )
 from logic.handlers.booking.handlers import (
+    CancelBookingCommandHandler,
     ConfirmBookingCommandHandler,
     CreateBookingCommandHandler,
 )
@@ -57,6 +59,7 @@ COMMAND_AND_HANDLER_PAIRS = [
     (PatchWorkplaceCommand, PatchWorkplaceCommandHandler),
     (CreateBookingCommand, CreateBookingCommandHandler),
     (ConfirmBookingCommand, ConfirmBookingCommandHandler),
+    (CancelBookingCommand, CancelBookingCommandHandler),
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
@@ -109,6 +112,7 @@ def _init_container() -> punq.Container:
     container.register(PatchWorkplaceCommandHandler)
     container.register(CreateBookingCommandHandler)
     container.register(ConfirmBookingCommandHandler)
+    container.register(CancelBookingCommandHandler)
 
     container.register(AccessTokenQueryHandler)
     container.register(GetCurrentUserQueryHandler)

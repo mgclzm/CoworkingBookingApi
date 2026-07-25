@@ -19,3 +19,9 @@ class CreateBookingCommand(BaseCommand[CreateBookingResponseSchema]):
 class ConfirmBookingCommand(BaseCommand[None]):
     booking_id: str
     user_id: str
+
+
+@dataclass(frozen=True)
+class CancelBookingCommand(BaseCommand[None]):
+    booking_id: str
+    user_id: str

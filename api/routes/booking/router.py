@@ -8,6 +8,7 @@ from domain.entities.base import ApplicationException, LogicException
 from domain.entities.booking import BookingNotFoundError
 from domain.values.booking import BookingConflictError
 from logic.commands.booking.booking_commands import (
+    CancelBookingCommand,
     ConfirmBookingCommand,
     CreateBookingCommand,
 )
@@ -82,6 +83,39 @@ async def confirm_booking(
     confirm_booking_command = ConfirmBookingCommand(booking_id, user_id)
     try:
         await command_mediator.execute_command(confirm_booking_command)
+    except ApplicationException as ex:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ex.message)
+    except LogicException as ex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND
+            if isinstance(ex, BookingNotFoundError)
+            else status.HTTP_403_FORBIDDEN,
+            detail=ex.message,
+        )
+
+
+@booking_router.post(
+    "/booking/{booking_id}/cancel",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Booking successfully cancelled"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "User is not authenticated"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Booking doesn`t belong to the authenticated user"
+        },
+        status.HTTP_404_NOT_FOUND: {"description": "Booking not found"},
+        status.HTTP_409_CONFLICT: {"description": "Booking is already cancelled"},
+    },
+    summary="Endpoint to cancel booking",
+)
+async def cancel_booking(
+    booking_id: str,
+    user_id: Annotated[str, Depends(require_access_token)],
+    command_mediator: Annotated[ICommandMediator, Depends(get_command_mediator)],
+):
+    cancel_booking_command = CancelBookingCommand(booking_id, user_id)
+    try:
+        await command_mediator.execute_command(cancel_booking_command)
     except ApplicationException as ex:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ex.message)
     except LogicException as ex:
