@@ -1,10 +1,14 @@
-from functools import lru_cache
+from functools import cache
 from typing import TypeVar, cast
 
 import punq
 
 from infra.uow.base import BaseUnitOfWork
 from infra.uow.unit_of_work import SqlAlchemyUnitOfWork
+from logic.commands.booking.booking_commands import (
+    ConfirmBookingCommand,
+    CreateBookingCommand,
+)
 from logic.commands.user.user_commands import (
     IssueRefreshTokenCommand,
     LogoutCommand,
@@ -15,6 +19,10 @@ from logic.commands.workspace.workspace_commands import (
     PatchWorkplaceCommand,
     PatchWorkspaceCommand,
     RegisterWorkspaceCommand,
+)
+from logic.handlers.booking.handlers import (
+    ConfirmBookingCommandHandler,
+    CreateBookingCommandHandler,
 )
 from logic.handlers.user.handlers import (
     AccessTokenQueryHandler,
@@ -47,6 +55,8 @@ COMMAND_AND_HANDLER_PAIRS = [
     (AddWorkplaceCommand, AddWorkplaceCommandHandler),
     (PatchWorkspaceCommand, PatchWorkspaceCommandHandler),
     (PatchWorkplaceCommand, PatchWorkplaceCommandHandler),
+    (CreateBookingCommand, CreateBookingCommandHandler),
+    (ConfirmBookingCommand, ConfirmBookingCommandHandler),
 ]
 
 QUERY_AND_HANDLER_PAIRS = [
@@ -80,7 +90,7 @@ def typed_resolve(container: punq.Container, service_type: type[T]) -> T:
     return cast(T, container.resolve(service_type))
 
 
-@lru_cache(maxsize=None)
+@cache
 def init_container() -> punq.Container:
     return _init_container()
 
@@ -97,6 +107,8 @@ def _init_container() -> punq.Container:
     container.register(AddWorkplaceCommandHandler)
     container.register(PatchWorkspaceCommandHandler)
     container.register(PatchWorkplaceCommandHandler)
+    container.register(CreateBookingCommandHandler)
+    container.register(ConfirmBookingCommandHandler)
 
     container.register(AccessTokenQueryHandler)
     container.register(GetCurrentUserQueryHandler)

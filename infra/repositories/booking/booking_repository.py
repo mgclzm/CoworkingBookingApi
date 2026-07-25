@@ -91,3 +91,12 @@ class SqlAlchemyBookingRepository(BaseBookingRepository):
         )
         result = await self._session.execute(query)
         return result.scalar_one_or_none() is None
+
+    async def find_by_booking_id(self, booking_id: str) -> Booking | None:
+        result = await self._session.execute(
+            select(BookingModel).where(BookingModel.booking_id == booking_id)
+        )
+        result = result.scalar_one_or_none()
+        if result is None:
+            return None
+        return _convert_booking_model_to_entity(result)

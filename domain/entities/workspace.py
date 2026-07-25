@@ -1,6 +1,6 @@
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import time
-from typing import Iterator
 from uuid import uuid4
 
 from domain.entities.base import (

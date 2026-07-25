@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 
 from api.routes.booking.schemas import CreateBookingResponseSchema
-from domain.entities.booking import Booking
+from domain.entities.booking import Booking, BookingNotFoundError
 from domain.entities.workspace import WorkplaceNotFoundError, WorkspaceNotFoundError
 from domain.values.booking import BookingConflictError, BookingTime
 from domain.values.workspace import Number
 from infra.uow.base import BaseUnitOfWork
-from logic.commands.booking.booking_commands import CreateBookingCommand
+from logic.commands.booking.booking_commands import (
+    ConfirmBookingCommand,
+    CreateBookingCommand,
+)
 from logic.handlers.base import CommandHandler
 
 
@@ -54,3 +57,23 @@ class CreateBookingCommandHandler(
                 booking_id=new_booking.booking_id
             )
             return response_schema
+
+
+@dataclass
+class ConfirmBookingCommandHandler(CommandHandler[ConfirmBookingCommand, None]):
+    _uow: BaseUnitOfWork
+
+    async def handle(self, command: ConfirmBookingCommand) -> None:
+        async with self._uow:
+            found_booking = await self._uow.booking_repository.find_by_booking_id(
+                command.booking_id
+            )
+            if found_booking is None:
+                raise BookingNotFoundError(command.booking_id)
+
+            found_booking.ensure_belong_to(command.user_id)
+
+            found_booking.confirm_booking()
+
+            await self._uow.booking_repository.merge(found_booking)
+            await self._uow.commit()

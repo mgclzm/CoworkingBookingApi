@@ -13,3 +13,9 @@ class CreateBookingCommand(BaseCommand[CreateBookingResponseSchema]):
     start_time: time
     end_time: time
     day: date
+
+
+@dataclass(frozen=True)
+class ConfirmBookingCommand(BaseCommand[None]):
+    booking_id: str
+    user_id: str

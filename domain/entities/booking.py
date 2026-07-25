@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from uuid import uuid4
 
-from domain.entities.base import ApplicationException, BaseEntity
+from domain.entities.base import ApplicationException, BaseEntity, LogicException
 from domain.values.booking import BookingTime
 
 
@@ -28,6 +28,22 @@ class BookingCancelError(ApplicationException):
 
 
 @dataclass
+class BookingNotFoundError(LogicException):
+    booking_id: str
+
+    @property
+    def message(self) -> str:
+        return f'Booking with "{self.booking_id}" id not found'
+
+
+@dataclass
+class BookingAccessDeniedError(LogicException):
+    @property
+    def message(self) -> str:
+        return "Access to booking is denied"
+
+
+@dataclass
 class Booking(BaseEntity):
     booking_id: str = field(default_factory=lambda: str(uuid4()), kw_only=True)
     user_id: str
@@ -48,3 +64,7 @@ class Booking(BaseEntity):
         ):
             raise BookingCancelError()
         self.status = BookingStatus.CANCELLED
+
+    def ensure_belong_to(self, user_id: str) -> None:
+        if self.user_id != user_id:
+            raise BookingAccessDeniedError()
