@@ -1,6 +1,6 @@
-from datetime import date, time
+from datetime import date, time, timezone
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from infra.repositories.booking.booking_model import BookingModel
 from infra.repositories.workspace.workspace_model import WorkplaceModel, WorkspaceModel
@@ -10,6 +10,13 @@ class CreateBookingSchema(BaseModel):
     start_time: time
     end_time: time
     day: date
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def add_timezone(cls, v: time) -> time:
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        return v
 
 
 class CreateBookingResponseSchema(BaseModel):
