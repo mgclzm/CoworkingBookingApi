@@ -1,9 +1,17 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from api.app.dependencies import get_command_mediator, require_access_token
-from api.routes.booking.schemas import CreateBookingResponseSchema, CreateBookingSchema
+from api.app.dependencies import (
+    get_command_mediator,
+    get_query_mediator,
+    require_access_token,
+)
+from api.routes.booking.schemas import (
+    CreateBookingResponseSchema,
+    CreateBookingSchema,
+    GetMyBookingsQueryParams,
+)
 from domain.entities.base import ApplicationException, LogicException
 from domain.entities.booking import BookingNotFoundError
 from domain.values.booking import BookingConflictError
@@ -12,7 +20,8 @@ from logic.commands.booking.booking_commands import (
     ConfirmBookingCommand,
     CreateBookingCommand,
 )
-from logic.mediator.base import ICommandMediator
+from logic.mediator.base import ICommandMediator, IQueryMediator
+from logic.queries.booking.booking_queries import GetMyBookingsQuery
 
 booking_router = APIRouter(prefix="/v1", tags=["Booking"])
 
@@ -125,3 +134,26 @@ async def cancel_booking(
             else status.HTTP_403_FORBIDDEN,
             detail=ex.message,
         )
+
+
+@booking_router.get(
+    "/me/booking",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Return information about bookings which belongs to authenticated user"
+        },
+        status.HTTP_401_UNAUTHORIZED: {"description": "User is not authenticated"},
+    },
+    summary="Endpoint to obtain information about bookings which belongs to authenticated user, require access token",
+)
+async def get_my_bookings(
+    query_params: Annotated[GetMyBookingsQueryParams, Query()],
+    user_id: Annotated[str, Depends(require_access_token)],
+    query_mediator: Annotated[IQueryMediator, Depends(get_query_mediator)],
+):
+    get_my_bookings_query = GetMyBookingsQuery(
+        query_params.page_number, query_params.page_size, user_id
+    )
+    response_schemas = await query_mediator.execute_query(get_my_bookings_query)
+    return response_schemas

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from api.routes.booking.schemas import CreateBookingResponseSchema
+from api.routes.booking.schemas import BookingSchema, CreateBookingResponseSchema
 from domain.entities.booking import Booking, BookingNotFoundError
 from domain.entities.workspace import WorkplaceNotFoundError, WorkspaceNotFoundError
 from domain.values.booking import BookingConflictError, BookingTime
@@ -11,7 +11,8 @@ from logic.commands.booking.booking_commands import (
     ConfirmBookingCommand,
     CreateBookingCommand,
 )
-from logic.handlers.base import CommandHandler
+from logic.handlers.base import CommandHandler, QueryHandler
+from logic.queries.booking.booking_queries import GetMyBookingsQuery
 
 
 @dataclass
@@ -98,3 +99,17 @@ class CancelBookingCommandHandler(CommandHandler[CancelBookingCommand, None]):
 
             await self._uow.booking_repository.merge(found_booking)
             await self._uow.commit()
+
+
+@dataclass
+class GetMyBookingsQueryHandler(QueryHandler[GetMyBookingsQuery, list[BookingSchema]]):
+    _uow: BaseUnitOfWork
+
+    async def handle(self, query: GetMyBookingsQuery) -> list[BookingSchema]:
+        async with self._uow:
+            offset = (query.page_number - 1) * query.page_size
+            limit = query.page_size
+
+            return await self._uow.booking_repository.find_all_by_user_id(
+                query.user_id, limit=limit, offset=offset
+            )

@@ -3,11 +3,12 @@ from dataclasses import dataclass
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.routes.booking.schemas import BookingSchema
 from domain.entities.booking import Booking, BookingStatus
 from domain.values.booking import BookingTime
 from infra.repositories.booking.base import BaseBookingRepository
 from infra.repositories.booking.booking_model import BookingModel
-from infra.repositories.workspace.workspace_model import WorkplaceModel
+from infra.repositories.workspace.workspace_model import WorkplaceModel, WorkspaceModel
 
 
 def _convert_booking_model_to_entity(booking_model: BookingModel) -> Booking:
@@ -61,12 +62,26 @@ class SqlAlchemyBookingRepository(BaseBookingRepository):
         booking_model = _convert_booking_entity_to_model(entity)
         await self._session.merge(booking_model)
 
-    async def find_all_by_user_id(self, user_id: str) -> list[Booking]:
-        result = await self._session.execute(
-            select(BookingModel).where(BookingModel.user_id == user_id)
+    async def find_all_by_user_id(
+        self, user_id: str, *, limit: int = 10, offset: int = 0
+    ) -> list[BookingSchema]:
+        query = (
+            select(BookingModel, WorkspaceModel, WorkplaceModel)
+            .join(
+                WorkspaceModel, BookingModel.workspace_id == WorkspaceModel.workspace_id
+            )
+            .join(
+                WorkplaceModel, BookingModel.workplace_id == WorkplaceModel.workplace_id
+            )
+            .where(BookingModel.user_id == user_id)
+            .limit(limit)
+            .offset(offset)
         )
-        result = result.scalars().all()
-        return [_convert_booking_model_to_entity(booking) for booking in result]
+        result = await self._session.execute(query)
+        return [
+            BookingSchema.from_entities(booking, workspace, workplace)
+            for booking, workspace, workplace in result
+        ]
 
     async def is_workplace_available_for_booking(
         self, booking_time: BookingTime, workspace_id: str, workplace_number: int

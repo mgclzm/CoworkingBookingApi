@@ -25,6 +25,7 @@ from logic.handlers.booking.handlers import (
     CancelBookingCommandHandler,
     ConfirmBookingCommandHandler,
     CreateBookingCommandHandler,
+    GetMyBookingsQueryHandler,
 )
 from logic.handlers.user.handlers import (
     AccessTokenQueryHandler,
@@ -43,6 +44,7 @@ from logic.handlers.workspace.handlers import (
 )
 from logic.mediator.base import ICommandMediator, IQueryMediator
 from logic.mediator.mediator import CommandMediator, QueryMediator
+from logic.queries.booking.booking_queries import GetMyBookingsQuery
 from logic.queries.user.user_queries import AccessTokenQuery, GetCurrentUserQuery
 from logic.queries.workspace.workspace_queries import (
     GetAllWorkspacesQuery,
@@ -67,6 +69,7 @@ QUERY_AND_HANDLER_PAIRS = [
     (GetCurrentUserQuery, GetCurrentUserQueryHandler),
     (GetAllWorkspacesQuery, GetAllWorkspacesQueryHandler),
     (GetMyWorkspacesQuery, GetMyWorkspacesQueryHandler),
+    (GetMyBookingsQuery, GetMyBookingsQueryHandler),
 ]
 
 
@@ -118,6 +121,7 @@ def _init_container() -> punq.Container:
     container.register(GetCurrentUserQueryHandler)
     container.register(GetAllWorkspacesQueryHandler)
     container.register(GetMyWorkspacesQueryHandler)
+    container.register(GetMyBookingsQueryHandler)
 
     container.register(
         ICommandMediator,
