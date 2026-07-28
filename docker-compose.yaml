@@ -53,10 +53,47 @@ services:
       - postgres
     networks:
       - backend
-
+  redis:
+    image: redis:7-bookworm
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: [ "redis-server", "--appendonly", "yes" ]
+    networks:
+      - backend
+  taskiq-worker:
+    build: .
+    restart: unless-stopped
+    command: "uv run taskiq worker infra.tasks.tasks:broker"
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+    networks:
+      - backend
+  taskiq-scheduler:
+    build: .
+    restart: unless-stopped
+    command: "uv run taskiq scheduler infra.tasks.tasks:scheduler"
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+    networks:
+      - backend
 volumes:
   pgadmin_data:
   postgres_db_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

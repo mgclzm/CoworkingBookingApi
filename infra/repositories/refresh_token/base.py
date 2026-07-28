@@ -10,3 +10,6 @@ class BaseRefreshTokenRepository(BaseRepository[RefreshToken]):
 
     @abstractmethod
     async def find_by_token_id(self, token_id: str) -> RefreshToken | None: ...
+
+    @abstractmethod
+    async def bulk_update_expired_tokens(self) -> None: ...

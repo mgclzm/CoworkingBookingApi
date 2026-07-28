@@ -14,5 +14,8 @@ dependencies = [
     "pydantic-settings>=2.14.2",
     "pyjwt>=2.13.0",
     "pytest>=9.0.3",
+    "redis>=8.0.1",
     "sqlalchemy[asyncio]>=2.0.51",
+    "taskiq>=0.12.4",
+    "taskiq-redis>=1.2.3",
 ]

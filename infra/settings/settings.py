@@ -23,5 +23,12 @@ class Settings(BaseSettings):
     access_token_secret: str = Field(alias="ACCESS_TOKEN_SECRET", default="")
     access_token_lifetime: int = Field(alias="ACCESS_TOKEN_LIFETIME", default=0)
 
+    redis_host: str = Field(alias="REDIS_HOST", default="")
+    redis_port: str = Field(alias="REDIS_PORT", default="")
+
+    @property
+    def redis_url(self) -> str:
+        return f"redis://{self.redis_host}:{self.redis_port}"
+
 
 settings = Settings()

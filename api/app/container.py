@@ -2,7 +2,11 @@ from functools import cache
 from typing import TypeVar, cast
 
 import punq
+from taskiq_redis import RedisStreamBroker
 
+from infra.settings.settings import settings
+from infra.task_broker.base import BaseTaskBroker
+from infra.task_broker.redis_broker import RedisTaskBroker
 from infra.uow.base import BaseUnitOfWork
 from infra.uow.unit_of_work import SqlAlchemyUnitOfWork
 from logic.commands.booking.booking_commands import (
@@ -89,6 +93,11 @@ def _init_query_mediator(container: punq.Container) -> QueryMediator:
     return query_mediator
 
 
+def _init_redis_task_broker(container: punq.Container) -> RedisTaskBroker:
+    task_broker = RedisTaskBroker(broker=RedisStreamBroker(url=settings.redis_url))
+    return task_broker
+
+
 T = TypeVar("T")
 
 
@@ -131,6 +140,12 @@ def _init_container() -> punq.Container:
     container.register(
         IQueryMediator,
         factory=lambda: _init_query_mediator(container),
+        scope=punq.Scope.singleton,
+    )
+
+    container.register(
+        BaseTaskBroker,
+        factory=lambda: _init_redis_task_broker(container),
         scope=punq.Scope.singleton,
     )
     return container

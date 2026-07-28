@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.entities.refresh_token import RefreshToken
@@ -69,3 +69,12 @@ class SqlAlchemyRefreshTokenRepository(BaseRefreshTokenRepository):
         if result is None:
             return None
         return _convert_refresh_token_model_to_entity(result)
+
+    async def bulk_update_expired_tokens(self) -> None:
+        query = (
+            update(RefreshTokenModel)
+            .where(RefreshTokenModel.revoked != True)
+            .where(RefreshTokenModel.expires_at < func.now())
+            .values(revoked=True)
+        )
+        await self._session.execute(query)

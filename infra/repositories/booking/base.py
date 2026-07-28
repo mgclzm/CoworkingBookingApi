@@ -19,3 +19,6 @@ class BaseBookingRepository(BaseRepository[Booking]):
 
     @abstractmethod
     async def find_by_booking_id(self, booking_id: str) -> Booking | None: ...
+
+    @abstractmethod
+    async def bulk_update_expired_bookings(self) -> None: ...

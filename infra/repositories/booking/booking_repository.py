@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.routes.booking.schemas import BookingSchema
@@ -115,3 +115,13 @@ class SqlAlchemyBookingRepository(BaseBookingRepository):
         if result is None:
             return None
         return _convert_booking_model_to_entity(result)
+
+    async def bulk_update_expired_bookings(self) -> None:
+
+        query = (
+            update(BookingModel)
+            .where((BookingModel.day + BookingModel.end_time) < func.now())
+            .where(BookingModel.status != BookingStatus.COMPLETED)
+            .values(status=BookingStatus.COMPLETED)
+        )
+        await self._session.execute(query)
