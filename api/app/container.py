@@ -93,7 +93,7 @@ def _init_query_mediator(container: punq.Container) -> QueryMediator:
     return query_mediator
 
 
-def _init_redis_task_broker(container: punq.Container) -> RedisTaskBroker:
+def _init_redis_task_broker() -> RedisTaskBroker:
     task_broker = RedisTaskBroker(broker=RedisStreamBroker(url=settings.redis_url))
     return task_broker
 
@@ -113,7 +113,7 @@ def init_container() -> punq.Container:
 def _init_container() -> punq.Container:
     container = punq.Container()
 
-    container.register(BaseUnitOfWork, SqlAlchemyUnitOfWork, scope=punq.Scope.singleton)
+    container.register(BaseUnitOfWork, SqlAlchemyUnitOfWork, scope=punq.Scope.transient)
 
     container.register(RegisterUserCommandHandler)
     container.register(IssueRefreshTokenCommandHandler)
@@ -135,17 +135,17 @@ def _init_container() -> punq.Container:
     container.register(
         ICommandMediator,
         factory=lambda: _init_command_mediator(container),
-        scope=punq.Scope.singleton,
+        scope=punq.Scope.transient,
     )
     container.register(
         IQueryMediator,
         factory=lambda: _init_query_mediator(container),
-        scope=punq.Scope.singleton,
+        scope=punq.Scope.transient,
     )
 
     container.register(
         BaseTaskBroker,
-        factory=lambda: _init_redis_task_broker(container),
+        factory=_init_redis_task_broker,
         scope=punq.Scope.singleton,
     )
     return container
