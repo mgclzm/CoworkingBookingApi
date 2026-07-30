@@ -5,6 +5,7 @@ from domain.entities.booking import Booking, BookingNotFoundError
 from domain.entities.workspace import WorkplaceNotFoundError, WorkspaceNotFoundError
 from domain.values.booking import BookingConflictError, BookingTime
 from domain.values.workspace import Number
+from infra.cache.cache import cached
 from infra.uow.base import BaseUnitOfWork
 from logic.commands.booking.booking_commands import (
     CancelBookingCommand,
@@ -105,6 +106,7 @@ class CancelBookingCommandHandler(CommandHandler[CancelBookingCommand, None]):
 class GetMyBookingsQueryHandler(QueryHandler[GetMyBookingsQuery, list[BookingSchema]]):
     _uow: BaseUnitOfWork
 
+    @cached(prefix="GetMyBookings", ttl=180)
     async def handle(self, query: GetMyBookingsQuery) -> list[BookingSchema]:
         async with self._uow:
             offset = (query.page_number - 1) * query.page_size

@@ -148,4 +148,6 @@ def _init_container() -> punq.Container:
         factory=_init_redis_task_broker,
         scope=punq.Scope.singleton,
     )
+
+    # container.register(Redis, factory=_init_redis_cache, scope=punq.Scope.singleton)
     return container

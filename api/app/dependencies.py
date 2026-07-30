@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, cast
+from typing import Annotated, cast
 
 import jwt
 import punq
@@ -32,12 +32,12 @@ def get_query_mediator() -> IQueryMediator:
 
 refresh_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 access_oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/access", auto_error=False, refreshUrl="login"
+    tokenUrl="/login", auto_error=False, refreshUrl="/access"
 )
 
 
 async def require_refresh_token(
-    refresh_token: Annotated[Optional[str], Security(refresh_oauth2_scheme)],
+    refresh_token: Annotated[str | None, Security(refresh_oauth2_scheme)],
     container: Annotated[punq.Container, Depends(init_container)],
 ) -> RefreshTokenData:
     if refresh_token is None:
@@ -81,7 +81,7 @@ async def require_refresh_token(
 
 
 def require_access_token(
-    access_token: Annotated[Optional[str], Security(access_oauth2_scheme)],
+    access_token: Annotated[str | None, Security(access_oauth2_scheme)],
 ) -> str:
     if access_token is None:
         raise HTTPException(

@@ -24,6 +24,7 @@ from domain.entities.user import (
     UserNotFoundError,
 )
 from domain.values.user import Email, Name, Password
+from infra.cache.cache import cached
 from infra.settings.settings import settings
 from infra.uow.base import BaseUnitOfWork
 from logic.commands.user.user_commands import (
@@ -120,6 +121,7 @@ class GetCurrentUserQueryHandler(
 ):
     _uow: BaseUnitOfWork
 
+    @cached("GetCurrentUserQuery", ttl=180)
     async def handle(self, query: GetCurrentUserQuery) -> GetCurrentUserResponseSchema:
         async with self._uow:
             found_user = await self._uow.user_repository.find_by_user_id(query.user_id)

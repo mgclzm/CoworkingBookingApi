@@ -13,6 +13,7 @@ from domain.values.workspace import (
     WorkspaceDescription,
     WorkspaceLocation,
 )
+from infra.cache.cache import cached
 from infra.uow.base import BaseUnitOfWork
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
@@ -92,6 +93,7 @@ class GetAllWorkspacesQueryHandler(
 ):
     _uow: BaseUnitOfWork
 
+    @cached(prefix="GetAllWorkspaces", ttl=180)
     async def handle(self, query: GetAllWorkspacesQuery) -> list[WorkspaceSchema]:
         async with self._uow:
             offset = (query.page_number - 1) * query.page_size
@@ -112,6 +114,7 @@ class GetMyWorkspacesQueryHandler(
 ):
     _uow: BaseUnitOfWork
 
+    @cached(prefix="GetMyWorkspaces", ttl=180)
     async def handle(self, query: GetMyWorkspacesQuery) -> list[WorkspaceSchema]:
         async with self._uow:
             offset = (query.page_number - 1) * query.page_size
