@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from types import TracebackType
+from typing import Self
 
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from infra.repositories.booking.booking_repository import SqlAlchemyBookingRepository
@@ -23,12 +25,13 @@ DEFAULT_SESSION_FACTORY = async_sessionmaker(
 
 @dataclass
 class SqlAlchemyUnitOfWork(BaseUnitOfWork):
+    cache: Redis
     _session_factory: async_sessionmaker[AsyncSession] = field(
         default=DEFAULT_SESSION_FACTORY
     )
     _session: AsyncSession = field(init=False)
 
-    async def __aenter__(self) -> "SqlAlchemyUnitOfWork":
+    async def __aenter__(self) -> Self:
         self._session = self._session_factory()
         self.user_repository = SqlAlchemyUserRepository(self._session)
         self.workspace_repository = SqlAlchemyWorkspaceRepository(self._session)
@@ -50,6 +53,3 @@ class SqlAlchemyUnitOfWork(BaseUnitOfWork):
 
     async def commit(self) -> None:
         await self._session.commit()
-
-    # async def _rollback(self):
-    #     await self._session.rollback()

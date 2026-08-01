@@ -2,8 +2,10 @@ from functools import cache
 from typing import TypeVar, cast
 
 import punq
+from redis.asyncio import Redis
 from taskiq_redis import RedisStreamBroker
 
+from infra.cache.cache import CacheInvalidator, _init_redis_cache
 from infra.settings.settings import settings
 from infra.task_broker.base import BaseTaskBroker
 from infra.task_broker.redis_broker import RedisTaskBroker
@@ -149,5 +151,7 @@ def _init_container() -> punq.Container:
         scope=punq.Scope.singleton,
     )
 
-    # container.register(Redis, factory=_init_redis_cache, scope=punq.Scope.singleton)
+    container.register(CacheInvalidator)
+
+    container.register(Redis, factory=_init_redis_cache, scope=punq.Scope.singleton)
     return container

@@ -5,7 +5,7 @@ from domain.entities.booking import Booking, BookingNotFoundError
 from domain.entities.workspace import WorkplaceNotFoundError, WorkspaceNotFoundError
 from domain.values.booking import BookingConflictError, BookingTime
 from domain.values.workspace import Number
-from infra.cache.cache import cached
+from infra.cache.cache import CacheInvalidator, cached
 from infra.uow.base import BaseUnitOfWork
 from logic.commands.booking.booking_commands import (
     CancelBookingCommand,
@@ -65,6 +65,7 @@ class CreateBookingCommandHandler(
 @dataclass
 class ConfirmBookingCommandHandler(CommandHandler[ConfirmBookingCommand, None]):
     _uow: BaseUnitOfWork
+    _cache_invalidator: CacheInvalidator
 
     async def handle(self, command: ConfirmBookingCommand) -> None:
         async with self._uow:
@@ -78,6 +79,9 @@ class ConfirmBookingCommandHandler(CommandHandler[ConfirmBookingCommand, None]):
 
             found_booking.confirm_booking()
 
+            await self._cache_invalidator.invalidate_tag(
+                f"booking:user_id:{command.user_id}"
+            )
             await self._uow.booking_repository.merge(found_booking)
             await self._uow.commit()
 
@@ -85,6 +89,7 @@ class ConfirmBookingCommandHandler(CommandHandler[ConfirmBookingCommand, None]):
 @dataclass
 class CancelBookingCommandHandler(CommandHandler[CancelBookingCommand, None]):
     _uow: BaseUnitOfWork
+    _cache_invalidator: CacheInvalidator
 
     async def handle(self, command: CancelBookingCommand) -> None:
         async with self._uow:
@@ -98,6 +103,9 @@ class CancelBookingCommandHandler(CommandHandler[CancelBookingCommand, None]):
 
             found_booking.cancel_booking()
 
+            await self._cache_invalidator.invalidate_tag(
+                f"booking:user_id:{command.user_id}"
+            )
             await self._uow.booking_repository.merge(found_booking)
             await self._uow.commit()
 
@@ -106,7 +114,11 @@ class CancelBookingCommandHandler(CommandHandler[CancelBookingCommand, None]):
 class GetMyBookingsQueryHandler(QueryHandler[GetMyBookingsQuery, list[BookingSchema]]):
     _uow: BaseUnitOfWork
 
-    @cached(prefix="GetMyBookings", ttl=180)
+    @cached(
+        prefix="GetMyBookings",
+        ttl=180,
+        tags=lambda self, query: [f"booking:user_id:{query.user_id}"],
+    )
     async def handle(self, query: GetMyBookingsQuery) -> list[BookingSchema]:
         async with self._uow:
             offset = (query.page_number - 1) * query.page_size

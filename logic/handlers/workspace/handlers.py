@@ -13,7 +13,7 @@ from domain.values.workspace import (
     WorkspaceDescription,
     WorkspaceLocation,
 )
-from infra.cache.cache import cached
+from infra.cache.cache import CacheInvalidator, cached
 from infra.uow.base import BaseUnitOfWork
 from logic.commands.workspace.workspace_commands import (
     AddWorkplaceCommand,
@@ -114,7 +114,11 @@ class GetMyWorkspacesQueryHandler(
 ):
     _uow: BaseUnitOfWork
 
-    @cached(prefix="GetMyWorkspaces", ttl=180)
+    @cached(
+        prefix="GetMyWorkspaces",
+        ttl=180,
+        tags=lambda self, query: [f"user_id:{query.user_id}"],
+    )
     async def handle(self, query: GetMyWorkspacesQuery) -> list[WorkspaceSchema]:
         async with self._uow:
             offset = (query.page_number - 1) * query.page_size
@@ -132,6 +136,7 @@ class GetMyWorkspacesQueryHandler(
 @dataclass
 class PatchWorkspaceCommandHandler(CommandHandler[PatchWorkspaceCommand, None]):
     _uow: BaseUnitOfWork
+    _cache_invalidator: CacheInvalidator
 
     async def handle(self, command: PatchWorkspaceCommand) -> None:
         async with self._uow:
@@ -149,6 +154,7 @@ class PatchWorkspaceCommandHandler(CommandHandler[PatchWorkspaceCommand, None]):
             )
             workspace.update_description(command.description)
 
+            await self._cache_invalidator.invalidate_tag(f"user_id:{command.user_id}")
             await self._uow.workspace_repository.merge(workspace)
             await self._uow.commit()
 
@@ -156,6 +162,7 @@ class PatchWorkspaceCommandHandler(CommandHandler[PatchWorkspaceCommand, None]):
 @dataclass
 class PatchWorkplaceCommandHandler(CommandHandler[PatchWorkplaceCommand, None]):
     _uow: BaseUnitOfWork
+    _cache_invalidator: CacheInvalidator
 
     async def handle(self, command: PatchWorkplaceCommand) -> None:
         async with self._uow:
@@ -174,5 +181,6 @@ class PatchWorkplaceCommandHandler(CommandHandler[PatchWorkplaceCommand, None]):
                 new_title=command.new_title,
             )
 
+            await self._cache_invalidator.invalidate_tag(f"user_id:{command.user_id}")
             await self._uow.workspace_repository.merge(workspace)
             await self._uow.commit()

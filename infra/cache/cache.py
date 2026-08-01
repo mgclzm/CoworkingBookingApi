@@ -2,7 +2,7 @@ import functools
 import hashlib
 import json
 from collections.abc import Callable
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
@@ -22,7 +22,7 @@ def _init_redis_cache() -> Redis:
     return redis
 
 
-def _json_default(obj: Any) -> Any:
+def json_default(obj: Any) -> Any:
     if is_dataclass(obj) and not isinstance(obj, type):
         return asdict(obj)
     if isinstance(obj, BaseModel):
@@ -36,13 +36,13 @@ def _json_default(obj: Any) -> Any:
 
 def cache_key(prefix: str, *args, **kwargs) -> str:
     key_data = json.dumps(
-        {"args": args[1:], "kwargs": kwargs}, sort_keys=True, default=_json_default
+        {"args": args[1:], "kwargs": kwargs}, sort_keys=True, default=json_default
     )
     key_hash = hashlib.sha256(key_data.encode()).hexdigest()[:16]
     return f"{prefix}:{key_hash}"
 
 
-def cached(prefix: str, ttl: int = 300):
+def cached(prefix: str, ttl: int = 300, tags: Callable[..., list[str]] | None = None):
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -59,10 +59,31 @@ def cached(prefix: str, ttl: int = 300):
 
             result = await func(*args, **kwargs)
 
-            await redis.setex(key, ttl, json.dumps(result, default=_json_default))
+            pipe = redis.pipeline()
+            pipe.setex(key, ttl, json.dumps(result, default=json_default))
 
+            if tags is not None:
+                for tag in tags(*args, **kwargs):
+                    tag_key = f"tag:{tag}"
+                    pipe.sadd(tag_key, key)
+                    pipe.expire(tag_key, ttl)
+
+            await pipe.execute()
             return result
 
         return wrapper
 
     return decorator
+
+
+@dataclass
+class CacheInvalidator:
+    redis: Redis
+
+    async def invalidate_tag(self, tag: str) -> None:
+        tag_key = f"tag:{tag}"
+        keys = await self.redis.smembers(tag_key)
+        if keys:
+            await self.redis.delete(*keys, tag_key)
+        else:
+            self.redis.delete(tag_key)
