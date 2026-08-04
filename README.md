@@ -16,7 +16,7 @@ Training project, aimed at practicing development methodologies and architectura
 - Pydantic settings - for loading settings from .env file.
 ## Project structure
 ```
-CoworkingBookApi
+CoworkingBookingApi
 ├── api    # FastAPI routes, DI container, entrypoint
 ├── domain # Entities and value objects
 ├── infra  # Repositories, cache, background tasks with broker, settings
