@@ -17,10 +17,10 @@ Training project, aimed at practicing development methodologies and architectura
 ## Project structure
 ```
 CoworkingBookApi
-├── api # FastAPI routes, DI container, entrypoint
+├── api    # FastAPI routes, DI container, entrypoint
 ├── domain # Entities and value objects
-├── infra # Repositories, cache, background tasks with broker, settings
-├── logic # CQRS-style commands, queries, handlers, mediator
+├── infra  # Repositories, cache, background tasks with broker, settings
+├── logic  # CQRS-style commands, queries, handlers, mediator
 ```
 The project follows a layered architecture with CQRS-like command/query
 separation and a mediator pattern for dispatching handlers. Repositories
